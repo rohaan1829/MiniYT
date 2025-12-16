@@ -4,18 +4,20 @@ import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { Home, Compass, Radio, Users, History, PlaySquare, Clock, ThumbsUp, Flame } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface SidebarItemProps {
     icon: React.ElementType;
     label: string;
+    href?: string;
     isActive?: boolean;
     isOpen: boolean;
 }
 
-const SidebarItem = ({ icon: Icon, label, isActive, isOpen }: SidebarItemProps) => {
+const SidebarItem = ({ icon: Icon, label, href = "#", isActive, isOpen }: SidebarItemProps) => {
     return (
         <Link
-            href="#"
+            href={href}
             className={cn(
                 "flex items-center p-3 rounded-lg mb-1 transition-colors",
                 isActive
@@ -32,18 +34,28 @@ const SidebarItem = ({ icon: Icon, label, isActive, isOpen }: SidebarItemProps) 
 
 export default function Sidebar() {
     const sidebarOpen = useStore((state) => state.sidebarOpen);
+    const pathname = usePathname();
+    const isWatchPage = pathname?.startsWith('/watch');
 
     return (
         <aside
             className={cn(
-                "fixed left-0 top-24 bottom-0 z-40 bg-background/80 backdrop-blur-md border-r border-border transition-[width] duration-300 overflow-y-auto hide-scrollbar",
-                sidebarOpen ? "w-64 px-4 py-4" : "w-20 px-2 py-4"
+                "fixed left-0 top-24 bottom-0 z-40 bg-background/80 backdrop-blur-md border-r border-border transition-[width,transform] duration-300 overflow-y-auto hide-scrollbar",
+                sidebarOpen
+                    ? "w-64 px-4 py-4"
+                    : isWatchPage
+                        ? "w-0 px-0 -translate-x-full border-none" // Completely hidden on Watch
+                        : "w-20 px-2 py-4" // Mini sidebar on Home
             )}
         >
             <div className="mb-6">
-                <SidebarItem icon={Home} label="Home" isActive isOpen={sidebarOpen} />
-                <SidebarItem icon={Compass} label="Explore" isOpen={sidebarOpen} />
-                <SidebarItem icon={Radio} label="Live" isOpen={sidebarOpen} />
+                <SidebarItem icon={Home} label="Home" href="/" isOpen={sidebarOpen} isActive={pathname === '/'} />
+                <SidebarItem icon={Compass} label="Explore" href="/explore" isOpen={sidebarOpen} isActive={pathname === '/explore'} />
+                <SidebarItem icon={Flame} label="Trending" href="/trending" isOpen={sidebarOpen} isActive={pathname === '/trending'} />
+                <SidebarItem icon={Radio} label="Live" href="/live" isOpen={sidebarOpen} isActive={pathname === '/live'} />
+                <div className="my-2 border-t border-border" />
+                <SidebarItem icon={PlaySquare} label="Library" href="/library" isOpen={sidebarOpen} isActive={pathname === '/library'} />
+                <SidebarItem icon={History} label="History" href="/history" isOpen={sidebarOpen} isActive={pathname === '/history'} />
             </div>
 
             <div className={cn("border-t border-gray-200 dark:border-gray-800 my-2", !sidebarOpen && "hidden")} />

@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 
 import { ModeToggle } from '@/components/ui/mode-toggle';
 
-import FloatingDock from '@/components/layout/FloatingDock';
 import Sidebar from '@/components/layout/Sidebar';
 import VideoGrid from '@/components/video/VideoGrid';
 import HeroSection from '@/components/home/HeroSection';
@@ -17,11 +16,11 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
-  const { user, sidebarOpen, toggleSidebar, toggleDock } = useStore();
+  const { user, sidebarOpen, toggleSidebar } = useStore();
 
-  // Ensure dock is visible on home
+  // Ensure dock is hidden on home
   useEffect(() => {
-    useStore.setState({ dockVisible: true });
+    useStore.setState({ dockVisible: false });
   }, []);
 
   return (
@@ -99,9 +98,6 @@ export default function Home() {
           <VideoGrid />
         </div>
       </main>
-
-      {/* Kept the Floating Dock */}
-      <FloatingDock />
     </div>
   );
 }

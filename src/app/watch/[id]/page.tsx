@@ -4,6 +4,9 @@ import Header from '@/components/layout/Header';
 import VideoPlayerSection from '@/components/watch/VideoPlayerSection';
 import RelatedVideos from '@/components/watch/RelatedVideos';
 import FloatingDock from '@/components/layout/FloatingDock';
+import WatchLayout from '@/components/watch/WatchLayout';
+
+import Sidebar from '@/components/layout/Sidebar';
 
 type Params = Promise<{ id: string }>;
 
@@ -15,26 +18,17 @@ export default async function WatchPage({ params }: { params: Params }) {
         notFound();
     }
 
-
-
-    // ...
-
     return (
         <div className="min-h-screen bg-background text-foreground bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
             <Header />
+            <Sidebar />
 
-            <main className="max-w-[1800px] mx-auto pt-4 px-4 lg:px-6 flex flex-col lg:flex-row gap-6">
-                {/* ... */}
-                <div className="flex-1 min-w-0">
-                    <VideoPlayerSection video={video} />
-                </div>
-
-                <div className="lg:w-[400px] xl:w-[450px] flex-shrink-0">
-                    <RelatedVideos currentVideoId={video.id} />
-                </div>
-            </main>
+            <WatchLayout sidebar={<RelatedVideos currentVideoId={video.id} />}>
+                <VideoPlayerSection video={video} />
+            </WatchLayout>
 
             <FloatingDock />
         </div>
     );
 }
+
