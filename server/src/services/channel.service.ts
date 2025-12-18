@@ -52,8 +52,8 @@ export const createChannel = async (userId: string, input: CreateChannelInput) =
     return channel;
 };
 
-export const getChannel = async (channelId: string) => {
-    const channel = await prisma.channel.findUnique({
+export const getChannel = async (channelId: string, userId?: string) => {
+    const channel = await (prisma as any).channel.findUnique({
         where: { id: channelId },
         include: {
             owner: {
@@ -71,11 +71,21 @@ export const getChannel = async (channelId: string) => {
         throw new NotFoundError('Channel not found');
     }
 
-    return channel;
+    let isSubscribed = false;
+    if (userId) {
+        const sub = await (prisma as any).subscription.findUnique({
+            where: {
+                userId_channelId: { userId, channelId },
+            },
+        });
+        isSubscribed = !!sub;
+    }
+
+    return { ...channel, isSubscribed };
 };
 
-export const getChannelByHandle = async (handle: string) => {
-    const channel = await prisma.channel.findUnique({
+export const getChannelByHandle = async (handle: string, userId?: string) => {
+    const channel = await (prisma as any).channel.findUnique({
         where: { handle },
         include: {
             owner: {
@@ -93,7 +103,17 @@ export const getChannelByHandle = async (handle: string) => {
         throw new NotFoundError('Channel not found');
     }
 
-    return channel;
+    let isSubscribed = false;
+    if (userId) {
+        const sub = await (prisma as any).subscription.findUnique({
+            where: {
+                userId_channelId: { userId, channelId: channel.id },
+            },
+        });
+        isSubscribed = !!sub;
+    }
+
+    return { ...channel, isSubscribed };
 };
 
 export const updateChannel = async (
@@ -139,4 +159,43 @@ export const deleteChannel = async (channelId: string, userId: string) => {
     await prisma.channel.delete({
         where: { id: channelId },
     });
+};
+
+export const subscribe = async (userId: string, channelId: string) => {
+    return await (prisma as any).$transaction(async (tx: any) => {
+        const sub = await tx.subscription.create({
+            data: { userId, channelId },
+        });
+
+        await tx.channel.update({
+            where: { id: channelId },
+            data: { subscriberCount: { increment: 1 } },
+        });
+
+        return sub;
+    });
+};
+
+export const unsubscribe = async (userId: string, channelId: string) => {
+    await (prisma as any).$transaction(async (tx: any) => {
+        await tx.subscription.delete({
+            where: {
+                userId_channelId: { userId, channelId },
+            },
+        });
+
+        await tx.channel.update({
+            where: { id: channelId },
+            data: { subscriberCount: { decrement: 1 } },
+        });
+    });
+};
+
+export const isSubscribed = async (userId: string, channelId: string) => {
+    const sub = await (prisma as any).subscription.findUnique({
+        where: {
+            userId_channelId: { userId, channelId },
+        },
+    });
+    return !!sub;
 };

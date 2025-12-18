@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import { cn } from '@/lib/utils';

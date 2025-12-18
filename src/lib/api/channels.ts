@@ -38,4 +38,36 @@ export const channelApi = {
         const response = await apiClient.delete(`/channels/${channelId}`);
         return response.data;
     },
+
+    subscribe: async (channelId: string) => {
+        const response = await apiClient.post(`/channels/${channelId}/subscribe`);
+        return response.data;
+    },
+
+    unsubscribe: async (channelId: string) => {
+        const response = await apiClient.delete(`/channels/${channelId}/subscribe`);
+        return response.data;
+    },
+
+    uploadAvatar: async (channelId: string, file: File) => {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        const response = await apiClient.post(`/channels/${channelId}/avatar`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
+    uploadBanner: async (channelId: string, file: File) => {
+        const formData = new FormData();
+        formData.append('banner', file);
+        const response = await apiClient.post(`/channels/${channelId}/banner`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
 };

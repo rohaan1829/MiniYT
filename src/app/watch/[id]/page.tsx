@@ -1,18 +1,46 @@
-import { VIDEOS } from '@/data/mockData';
 import { notFound } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import VideoPlayerSection from '@/components/watch/VideoPlayerSection';
 import RelatedVideos from '@/components/watch/RelatedVideos';
 import FloatingDock from '@/components/layout/FloatingDock';
 import WatchLayout from '@/components/watch/WatchLayout';
-
 import Sidebar from '@/components/layout/Sidebar';
 
 type Params = Promise<{ id: string }>;
 
+async function getVideo(id: string) {
+    try {
+        const response = await fetch(`http://localhost:4000/api/videos/${id}`, {
+            cache: 'no-store'
+        });
+        const json = await response.json();
+        return json.success ? json.data : null;
+    } catch (error) {
+        console.error('Failed to fetch video:', error);
+        return null;
+    }
+}
+
+async function getRelatedVideos() {
+    try {
+        const response = await fetch(`http://localhost:4000/api/videos?limit=10`, {
+            cache: 'no-store'
+        });
+        const json = await response.json();
+        return json.success ? json.data : [];
+    } catch (error) {
+        return [];
+    }
+}
+
 export default async function WatchPage({ params }: { params: Params }) {
     const { id } = await params;
-    const video = VIDEOS.find((v) => v.id === id);
+
+    // Fetch code
+    const [video, suggestedVideos] = await Promise.all([
+        getVideo(id),
+        getRelatedVideos()
+    ]);
 
     if (!video) {
         notFound();
@@ -23,7 +51,7 @@ export default async function WatchPage({ params }: { params: Params }) {
             <Header />
             <Sidebar />
 
-            <WatchLayout sidebar={<RelatedVideos currentVideoId={video.id} />}>
+            <WatchLayout sidebar={<RelatedVideos videos={suggestedVideos.filter((v: any) => v.id !== id)} />}>
                 <VideoPlayerSection video={video} />
             </WatchLayout>
 

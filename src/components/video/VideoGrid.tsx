@@ -1,42 +1,38 @@
-'use client';
-
-import { CATEGORIES, VIDEOS } from '@/data/mockData';
+import { CATEGORIES } from '@/data/mockData';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import VideoCard from './VideoCard';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-
-// Fisher-Yates shuffle algorithm for unbiased randomization
-function shuffleArray<T>(array: T[]): T[] {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-}
+import { videoApi } from '@/lib/api/videos';
+import { Loader2 } from 'lucide-react';
 
 export default function VideoGrid() {
     const [activeCategory, setActiveCategory] = useState('all');
+    const [videos, setVideos] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Deterministic initial state for server/hydration match
-    const [shuffledVideos, setShuffledVideos] = useState<any[]>(() => {
-        return [...VIDEOS, ...VIDEOS.map(v => ({ ...v, id: `repeat-${v.id}` }))];
-    });
-
-    // Shuffle only on client side after mount
     useEffect(() => {
-        setShuffledVideos(prev => shuffleArray([...prev]));
+        async function fetchVideos() {
+            setIsLoading(true);
+            try {
+                const response = await videoApi.getVideos();
+                setVideos(response.data);
+            } catch (error) {
+                console.error('Failed to fetch videos:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchVideos();
     }, []);
 
-    // Filter videos based on active category
-    const filteredVideos = useMemo(() => {
-        if (activeCategory === 'all') {
-            return shuffledVideos;
-        }
-        return shuffledVideos.filter(video => video.category === activeCategory);
-    }, [activeCategory, shuffledVideos]);
+    // Simple filter logic for mock-like categories
+    // In a real app, this would be a backend query
+    const filteredVideos = activeCategory === 'all'
+        ? videos
+        : videos.filter(v => v.title.toLowerCase().includes(activeCategory.toLowerCase()));
 
     return (
         <div className="space-y-6">
@@ -62,18 +58,24 @@ export default function VideoGrid() {
                 <ScrollBar orientation="horizontal" className="hidden" />
             </ScrollArea>
 
-            {/* Standard Grid - Randomized on each page load, filtered by category */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-                {filteredVideos.length > 0 ? (
-                    filteredVideos.map((video) => (
-                        <VideoCard key={video.id} video={video} />
-                    ))
-                ) : (
-                    <div className="col-span-full py-20 text-center text-muted-foreground">
-                        No videos found in this category.
-                    </div>
-                )}
-            </div>
+            {/* Grid */}
+            {isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+                    {filteredVideos.length > 0 ? (
+                        filteredVideos.map((video) => (
+                            <VideoCard key={video.id} video={video} />
+                        ))
+                    ) : (
+                        <div className="col-span-full py-20 text-center text-muted-foreground">
+                            No videos found. Check back later!
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

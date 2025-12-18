@@ -24,18 +24,52 @@ interface ChannelData {
     videoCount: number;
     verified: boolean;
     ownerId: string;
+    isSubscribed: boolean;
 }
 
 export default function ChannelPage() {
     const params = useParams();
     const id = params?.id as string;
-    const { user } = useStore();
+    const { user, subscribe: storeSubscribe, unsubscribe: storeUnsubscribe } = useStore();
 
     const [channel, setChannel] = useState<ChannelData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isSubscribing, setIsSubscribing] = useState(false);
 
     const isOwner = user && channel && user.id === channel.ownerId;
+
+    const handleSubscribe = async () => {
+        if (!user) {
+            // Redirect to login or show toast
+            return;
+        }
+
+        if (!channel) return;
+
+        setIsSubscribing(true);
+        try {
+            if (channel.isSubscribed) {
+                await storeUnsubscribe(channel.id);
+                setChannel({
+                    ...channel,
+                    isSubscribed: false,
+                    subscriberCount: channel.subscriberCount - 1,
+                });
+            } else {
+                await storeSubscribe(channel.id);
+                setChannel({
+                    ...channel,
+                    isSubscribed: true,
+                    subscriberCount: channel.subscriberCount + 1,
+                });
+            }
+        } catch (err) {
+            // Error already handled in store
+        } finally {
+            setIsSubscribing(false);
+        }
+    };
 
     useEffect(() => {
         async function fetchChannel() {
@@ -66,7 +100,7 @@ export default function ChannelPage() {
         }
 
         fetchChannel();
-    }, [id]);
+    }, [id, user]); // Added user to dependency array to refetch when login state changes
 
     if (loading) {
         return (
@@ -160,8 +194,21 @@ export default function ChannelPage() {
                             </>
                         ) : (
                             <>
-                                <Button className="flex-1 md:flex-none rounded-full px-8 font-bold bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200 h-10 text-base">
-                                    Subscribe
+                                <Button
+                                    className={`flex-1 md:flex-none rounded-full px-8 font-bold h-10 text-base transition-all ${channel.isSubscribed
+                                            ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                                            : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
+                                        }`}
+                                    onClick={handleSubscribe}
+                                    disabled={isSubscribing}
+                                >
+                                    {isSubscribing ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : channel.isSubscribed ? (
+                                        'Subscribed'
+                                    ) : (
+                                        'Subscribe'
+                                    )}
                                 </Button>
                                 <Button variant="secondary" size="icon" className="rounded-full h-10 w-10">
                                     <Bell className="w-5 h-5" />

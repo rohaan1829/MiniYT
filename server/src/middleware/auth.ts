@@ -52,3 +52,38 @@ export const authenticate = async (
         }
     }
 };
+
+export const optionalAuthenticate = async (
+    req: AuthRequest,
+    _res: Response,
+    next: NextFunction
+) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return next();
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        const decoded = jwt.verify(token, config.jwtSecret) as {
+            id: string;
+            email: string;
+            username: string;
+        };
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id },
+            select: { id: true, email: true, username: true },
+        });
+
+        if (user) {
+            req.user = user;
+        }
+        next();
+    } catch (error) {
+        // If token is invalid or user not found, just continue as guest
+        next();
+    }
+};

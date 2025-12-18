@@ -55,7 +55,12 @@ interface AppState {
 
     // Channel actions
     createChannel: (data: CreateChannelData) => Promise<void>;
+    updateChannel: (channelId: string, data: any) => Promise<void>;
+    uploadChannelAvatar: (channelId: string, file: File) => Promise<void>;
+    uploadChannelBanner: (channelId: string, file: File) => Promise<void>;
     updateUserChannel: (channel: Channel) => void;
+    subscribe: (channelId: string) => Promise<void>;
+    unsubscribe: (channelId: string) => Promise<void>;
 
     // UI actions
     toggleSidebar: () => void;
@@ -192,12 +197,96 @@ export const useStore = create<AppState>()(
                 }
             },
 
-            // Channel actions
-            createChannel: async (data) => {
+            updateChannel: async (channelId, data) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await channelApi.update(channelId, data);
+                    const currentUser = get().user;
+                    if (currentUser && currentUser.channel?.id === channelId) {
+                        set({
+                            user: {
+                                ...currentUser,
+                                channel: response.data,
+                            },
+                        });
+                    }
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Channel update failed';
+                    set({ error: message });
+                    throw error;
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            uploadChannelAvatar: async (channelId, file) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await channelApi.uploadAvatar(channelId, file);
+                    const currentUser = get().user;
+                    if (currentUser && currentUser.channel?.id === channelId) {
+                        set({
+                            user: {
+                                ...currentUser,
+                                channel: response.data,
+                            },
+                        });
+                    }
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Avatar upload failed';
+                    set({ error: message });
+                    throw error;
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            uploadChannelBanner: async (channelId, file) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await channelApi.uploadBanner(channelId, file);
+                    const currentUser = get().user;
+                    if (currentUser && currentUser.channel?.id === channelId) {
+                        set({
+                            user: {
+                                ...currentUser,
+                                channel: response.data,
+                            },
+                        });
+                    }
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Banner upload failed';
+                    set({ error: message });
+                    throw error;
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            subscribe: async (channelId) => {
+                try {
+                    await channelApi.subscribe(channelId);
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Subscription failed';
+                    set({ error: message });
+                    throw error;
+                }
+            },
+
+            unsubscribe: async (channelId) => {
+                try {
+                    await channelApi.unsubscribe(channelId);
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Unsubscribe failed';
+                    set({ error: message });
+                    throw error;
+                }
+            },
+
+            createChannel: async (data: CreateChannelData) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await channelApi.create(data);
-                    // Update user with new channel
                     const currentUser = get().user;
                     if (currentUser) {
                         set({
@@ -205,10 +294,8 @@ export const useStore = create<AppState>()(
                                 ...currentUser,
                                 channel: response.data,
                             },
-                            error: null,
                         });
                     }
-                    // Refresh to get updated token with channelId
                     await get().refreshAuth();
                 } catch (error: any) {
                     const message = error.response?.data?.message || 'Channel creation failed';

@@ -16,19 +16,58 @@ import {
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { searchApi } from '@/lib/api/search';
+import { cn } from '@/lib/utils';
+import { History, TrendingUp } from 'lucide-react';
 
 export default function Header() {
     const { toggleSidebar, toggleDock, user, logout } = useStore();
     const [mounted, setMounted] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
     const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            if (searchQuery.length < 2) {
+                setSuggestions([]);
+                return;
+            }
+
+            try {
+                const response = await searchApi.getSuggestions(searchQuery);
+                if (response.success) {
+                    setSuggestions(response.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch suggestions:', error);
+            }
+        };
+
+        const timer = setTimeout(fetchSuggestions, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const isWatchPage = pathname?.startsWith('/watch');
 
@@ -61,14 +100,13 @@ export default function Header() {
             </div>
 
             {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-8 hidden md:block">
+            <div className="flex-1 max-w-2xl mx-8 hidden md:block" ref={searchRef}>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-                        const query = formData.get('q');
-                        if (query) {
-                            window.location.href = `/results?search_query=${encodeURIComponent(query.toString())}`;
+                        if (searchQuery) {
+                            router.push(`/results?search_query=${encodeURIComponent(searchQuery)}`);
+                            setShowSuggestions(false);
                         }
                     }}
                     className="relative group"
@@ -80,8 +118,53 @@ export default function Header() {
                         name="q"
                         type="search"
                         placeholder="Search videos..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setShowSuggestions(true);
+                        }}
+                        onFocus={() => setShowSuggestions(true)}
                         className="w-full pl-12 h-12 text-lg bg-secondary border-transparent focus:bg-background transition-all rounded-full"
+                        autoComplete="off"
                     />
+
+                    {/* Suggestions Dropdown */}
+                    {showSuggestions && (suggestions.length > 0 || searchQuery.length >= 2) && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-2xl py-2 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                            {suggestions.length > 0 ? (
+                                suggestions.map((suggestion, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-colors text-left"
+                                        onClick={() => {
+                                            setSearchQuery(suggestion.text);
+                                            router.push(`/results?search_query=${encodeURIComponent(suggestion.text)}`);
+                                            setShowSuggestions(false);
+                                        }}
+                                    >
+                                        {suggestion.type === 'channel' ? (
+                                            <Tv className="h-4 w-4 text-primary" />
+                                        ) : (
+                                            <Search className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                        <span className="flex-1 truncate font-medium">{suggestion.text}</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground px-1.5 py-0.5 bg-secondary rounded">
+                                            {suggestion.type}
+                                        </span>
+                                    </button>
+                                ))
+                            ) : searchQuery.length >= 2 && (
+                                <button
+                                    type="submit"
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-colors text-left font-medium"
+                                >
+                                    <Search className="h-4 w-4 text-muted-foreground" />
+                                    <span>Search for "{searchQuery}"</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </form>
             </div>
 

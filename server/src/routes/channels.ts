@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { validate } from '../middleware/validator';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuthenticate, AuthRequest } from '../middleware/auth';
+import { upload } from '../middleware/upload';
 import * as channelService from '../services/channel.service';
+import { BadRequestError } from '../utils/errors';
+import prisma from '../config/database';
 
 const router = Router();
 
@@ -31,7 +34,7 @@ router.post(
     '/',
     authenticate,
     validate(createChannelSchema),
-    async (req, res, next) => {
+    async (req: AuthRequest, res, next) => {
         try {
             const channel = await channelService.createChannel(req.user!.id, req.body);
             res.status(201).json({
@@ -46,9 +49,9 @@ router.post(
 );
 
 // Get channel by ID
-router.get('/:channelId', async (req, res, next) => {
+router.get('/:channelId', optionalAuthenticate, async (req: AuthRequest, res, next) => {
     try {
-        const channel = await channelService.getChannel(req.params.channelId);
+        const channel = await channelService.getChannel(req.params.channelId, req.user?.id);
         res.json({ success: true, data: channel });
     } catch (error) {
         next(error);
@@ -56,10 +59,37 @@ router.get('/:channelId', async (req, res, next) => {
 });
 
 // Get channel by handle
-router.get('/handle/:handle', async (req, res, next) => {
+router.get('/handle/:handle', optionalAuthenticate, async (req: AuthRequest, res, next) => {
     try {
-        const channel = await channelService.getChannelByHandle(req.params.handle);
+        const channel = await channelService.getChannelByHandle(req.params.handle, req.user?.id);
         res.json({ success: true, data: channel });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Subscribe to a channel
+router.post('/:channelId/subscribe', authenticate, async (req: AuthRequest, res, next) => {
+    try {
+        const subscription = await channelService.subscribe(req.user!.id, req.params.channelId);
+        res.json({
+            success: true,
+            message: 'Subscribed successfully',
+            data: subscription,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Unsubscribe from a channel
+router.delete('/:channelId/subscribe', authenticate, async (req: AuthRequest, res, next) => {
+    try {
+        await channelService.unsubscribe(req.user!.id, req.params.channelId);
+        res.json({
+            success: true,
+            message: 'Unsubscribed successfully',
+        });
     } catch (error) {
         next(error);
     }
@@ -70,7 +100,7 @@ router.patch(
     '/:channelId',
     authenticate,
     validate(updateChannelSchema),
-    async (req, res, next) => {
+    async (req: AuthRequest, res, next) => {
         try {
             const channel = await channelService.updateChannel(
                 req.params.channelId,
@@ -88,8 +118,86 @@ router.patch(
     }
 );
 
+// Upload channel avatar
+router.post(
+    '/:channelId/avatar',
+    authenticate,
+    upload.single('avatar'),
+    async (req: AuthRequest, res, next) => {
+        try {
+            if (!req.file) {
+                throw new BadRequestError('No file uploaded');
+            }
+
+            const channelId = req.params.channelId;
+            const imageUrl = `/uploads/channels/${req.file.filename}`;
+
+            // Verify ownership via service or directly
+            const channel = await (prisma as any).channel.findUnique({
+                where: { id: channelId },
+            });
+
+            if (!channel || channel.ownerId !== req.user!.id) {
+                throw new BadRequestError('Channel not found or you are not the owner');
+            }
+
+            const updated = await (prisma as any).channel.update({
+                where: { id: channelId },
+                data: { avatarUrl: imageUrl },
+            });
+
+            res.json({
+                success: true,
+                message: 'Channel avatar updated successfully',
+                data: updated,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+// Upload channel banner
+router.post(
+    '/:channelId/banner',
+    authenticate,
+    upload.single('banner'),
+    async (req: AuthRequest, res, next) => {
+        try {
+            if (!req.file) {
+                throw new BadRequestError('No file uploaded');
+            }
+
+            const channelId = req.params.channelId;
+            const imageUrl = `/uploads/banners/${req.file.filename}`;
+
+            // Verify ownership
+            const channel = await (prisma as any).channel.findUnique({
+                where: { id: channelId },
+            });
+
+            if (!channel || channel.ownerId !== req.user!.id) {
+                throw new BadRequestError('Channel not found or you are not the owner');
+            }
+
+            const updated = await (prisma as any).channel.update({
+                where: { id: channelId },
+                data: { bannerUrl: imageUrl },
+            });
+
+            res.json({
+                success: true,
+                message: 'Channel banner updated successfully',
+                data: updated,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
 // Delete channel (owner only)
-router.delete('/:channelId', authenticate, async (req, res, next) => {
+router.delete('/:channelId', authenticate, async (req: AuthRequest, res, next) => {
     try {
         await channelService.deleteChannel(req.params.channelId, req.user!.id);
         res.json({

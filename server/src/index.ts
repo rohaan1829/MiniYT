@@ -15,6 +15,8 @@ import userRouter from './routes/users';
 import channelRouter from './routes/channels';
 import historyRouter from './routes/history';
 import playlistRouter from './routes/playlists';
+import videoRouter from './routes/videos';
+import searchRouter from './routes/search';
 
 const app = express();
 
@@ -44,6 +46,8 @@ app.use('/api/users', userRouter);
 app.use('/api/channels', channelRouter);
 app.use('/api/history', historyRouter);
 app.use('/api/playlists', playlistRouter);
+app.use('/api/videos', videoRouter);
+app.use('/api/search', searchRouter);
 
 // 404 handler
 app.use((_req, res) => {
