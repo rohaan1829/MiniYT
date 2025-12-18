@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 import prisma from '../config/database';
 import { BadRequestError, UnauthorizedError, ConflictError } from '../utils/errors';
+import { v4 as uuidv4 } from 'uuid';
 
 interface RegisterInput {
     email: string;
@@ -100,6 +101,16 @@ export const login = async (input: LoginInput) => {
         { expiresIn: '7d' }
     );
 
+    // Create a new session record
+    const sessionToken = uuidv4();
+    await prisma.session.create({
+        data: {
+            sessionToken,
+            userId: user.id,
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        },
+    });
+
     return {
         user: {
             id: user.id,
@@ -108,8 +119,10 @@ export const login = async (input: LoginInput) => {
             name: user.name,
             avatar: user.image,
             channel: user.channel,
+            twoFactorEnabled: (user as any).twoFactorEnabled,
         },
         token,
+        sessionToken, // Optional: returned if we want to track specific session
     };
 };
 
@@ -173,5 +186,29 @@ export const changePassword = async (userId: string, currentPass: string, newPas
     await prisma.user.update({
         where: { id: userId },
         data: { password: hashedPassword },
+    });
+};
+
+export const toggleTwoFactor = async (userId: string, enabled: boolean) => {
+    return await prisma.user.update({
+        where: { id: userId },
+        data: { twoFactorEnabled: enabled } as any,
+        select: { twoFactorEnabled: true } as any,
+    } as any);
+};
+
+export const getUserSessions = async (userId: string) => {
+    return await prisma.session.findMany({
+        where: { userId },
+        orderBy: { expires: 'desc' },
+    });
+};
+
+export const revokeSession = async (userId: string, sessionId: string) => {
+    return await prisma.session.deleteMany({
+        where: {
+            id: sessionId,
+            userId,
+        },
     });
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,9 +50,13 @@ export default function CreateChannelPage() {
         },
     });
 
-    // Redirect if user already has a channel
+    useEffect(() => {
+        if (user?.channel) {
+            router.push(`/channel/${user.channel.handle}`);
+        }
+    }, [user, router]);
+
     if (user?.channel) {
-        router.push(`/channel/${user.channel.handle}`);
         return null;
     }
 
