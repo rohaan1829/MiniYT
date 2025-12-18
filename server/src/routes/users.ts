@@ -1,8 +1,20 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validator';
+import { upload } from '../middleware/upload';
 import * as authService from '../services/auth.service';
+import prisma from '../config/database';
+import { BadRequestError } from '../utils/errors';
 
 const router = Router();
+
+const updateProfileSchema = z.object({
+    body: z.object({
+        name: z.string().min(1).max(100).optional(),
+        email: z.string().email().optional(),
+    }),
+});
 
 // Get current user profile
 router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
@@ -16,5 +28,78 @@ router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
         next(error);
     }
 });
+
+// Update user profile
+router.patch(
+    '/me',
+    authenticate,
+    validate(updateProfileSchema),
+    async (req: AuthRequest, res, next) => {
+        try {
+            const { name, email } = req.body;
+            const userId = req.user!.id;
+
+            const updated = await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    ...(name && { name }),
+                    ...(email && { email }),
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    username: true,
+                    name: true,
+                    image: true,
+                },
+            });
+
+            res.json({
+                success: true,
+                message: 'Profile updated successfully',
+                data: updated,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+// Upload profile picture
+router.post(
+    '/me/avatar',
+    authenticate,
+    upload.single('avatar'),
+    async (req: AuthRequest, res, next) => {
+        try {
+            if (!req.file) {
+                throw new BadRequestError('No file uploaded');
+            }
+
+            const userId = req.user!.id;
+            const imageUrl = `/uploads/profiles/${req.file.filename}`;
+
+            const updated = await prisma.user.update({
+                where: { id: userId },
+                data: { image: imageUrl },
+                select: {
+                    id: true,
+                    email: true,
+                    username: true,
+                    name: true,
+                    image: true,
+                },
+            });
+
+            res.json({
+                success: true,
+                message: 'Profile picture updated successfully',
+                data: updated,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
 
 export default router;

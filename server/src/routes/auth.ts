@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import jwt from 'jsonwebtoken';
 import { validate } from '../middleware/validator';
+import { authenticate } from '../middleware/auth';
+import { config } from '../config/env';
 import * as authService from '../services/auth.service';
 
 const router = Router();
@@ -41,6 +44,35 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
             success: true,
             message: 'Login successful',
             data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post('/refresh', authenticate, async (req, res, next) => {
+    try {
+        const user = await authService.getProfile(req.user!.id);
+        const token = jwt.sign(
+            {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                channelId: user.channel?.id || null,
+            },
+            config.jwtSecret,
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            success: true,
+            data: {
+                user: {
+                    ...user,
+                    avatar: user.image,
+                },
+                token
+            },
         });
     } catch (error) {
         next(error);

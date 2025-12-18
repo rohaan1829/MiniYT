@@ -23,6 +23,7 @@ model User {
   sessions      Session[]
   videos        Video[]
   comments      Comment[]
+  channel       Channel?  @relation("ChannelOwner")
   
   @@map("users")
 }
@@ -89,4 +90,23 @@ model Comment {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("comments")
+}
+
+model Channel {
+  id              String   @id @default(cuid())
+  handle          String   @unique  // e.g., @channelname
+  name            String
+  description     String?
+  bannerUrl       String?
+  avatarUrl       String?
+  subscriberCount Int      @default(0)
+  videoCount      Int      @default(0)
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  ownerId         String   @unique
+  owner           User     @relation("ChannelOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  @@map("channels")
 }

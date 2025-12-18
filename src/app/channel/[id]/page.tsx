@@ -1,34 +1,97 @@
-import { CHANNELS, VIDEOS } from '@/data/mockData';
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, notFound as navigateNotFound } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import VideoCard from '@/components/video/VideoCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell } from 'lucide-react';
+import { Bell, Settings, Upload, Loader2 } from 'lucide-react';
 import PageContainer from '@/components/layout/PageContainer';
+import { useStore } from '@/store/useStore';
+import { channelApi } from '@/lib/api/channels';
+import Link from 'next/link';
 
-type Params = Promise<{ id: string }>;
+interface ChannelData {
+    id: string;
+    handle: string;
+    name: string;
+    description?: string;
+    avatarUrl?: string;
+    bannerUrl?: string;
+    subscriberCount: number;
+    videoCount: number;
+    verified: boolean;
+    ownerId: string;
+}
 
-export default async function ChannelPage({ params }: { params: Params }) {
-    const { id } = await params;
+export default function ChannelPage() {
+    const params = useParams();
+    const id = params?.id as string;
+    const { user } = useStore();
 
-    // Find channel from mock data, or mock one based on ID if not in list (for demo flexibility)
-    let channel = CHANNELS.find((c) => c.id === id);
+    const [channel, setChannel] = useState<ChannelData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Fallback Mock if specific channel not found in the small mock list (since we linked from video cards that might not have deep mocks)
-    if (!channel) {
-        // Try to find a video that matches a channel name? Or just show a 404? 
-        // For a better demo, let's gracefully fallback to a generic channel data if not found, 
-        // or strictly 404. Let's strictly 404 for realism, but we need to ensure our Links use the right IDs.
-        // Actually, our video cards don't link to channels yet. Let's assume we navigate via some other way.
-        // For now, let's just 404 if not found in our dedicated list.
-        if (id === '1') { // Hack for demo if needed
-            channel = CHANNELS[0];
-        } else {
-            notFound();
+    const isOwner = user && channel && user.id === channel.ownerId;
+
+    useEffect(() => {
+        async function fetchChannel() {
+            if (!id) return;
+
+            setLoading(true);
+            setError(null);
+
+            try {
+                let response;
+                // If the ID starts with @, it's a handle
+                if (id.startsWith('@') || id.startsWith('%40')) {
+                    const handle = id.startsWith('%40') ? '@' + id.slice(3) : id;
+                    response = await channelApi.getByHandle(handle);
+                } else {
+                    response = await channelApi.getChannel(id);
+                }
+                setChannel(response.data);
+            } catch (err: any) {
+                if (err.response?.status === 404) {
+                    setError('Channel not found');
+                } else {
+                    setError(err.response?.data?.message || 'Failed to load channel');
+                }
+            } finally {
+                setLoading(false);
+            }
         }
+
+        fetchChannel();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (error || !channel) {
+        return (
+            <div className="min-h-screen bg-background text-foreground">
+                <Header />
+                <Sidebar />
+                <PageContainer>
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <h1 className="text-2xl font-bold mb-2">Channel Not Found</h1>
+                        <p className="text-muted-foreground mb-6">{error || "The channel you're looking for doesn't exist."}</p>
+                        <Link href="/">
+                            <Button>Go Home</Button>
+                        </Link>
+                    </div>
+                </PageContainer>
+            </div>
+        );
     }
 
     return (
@@ -38,43 +101,73 @@ export default async function ChannelPage({ params }: { params: Params }) {
 
             <PageContainer>
                 {/* Banner */}
-                <div className="w-full h-48 md:h-64 lg:h-80 relative overflow-hidden bg-muted">
-                    <img
-                        src={channel.banner}
-                        alt="Channel Banner"
-                        className="w-full h-full object-cover"
-                    />
+                <div className="w-full h-48 md:h-64 lg:h-80 relative overflow-hidden bg-gradient-to-br from-primary/30 to-blue-500/20">
+                    {channel.bannerUrl ? (
+                        <img
+                            src={channel.bannerUrl}
+                            alt="Channel Banner"
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-blue-500/20" />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 </div>
 
                 {/* Channel Header Info */}
                 <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-8 relative z-10 flex flex-col md:flex-row items-start md:items-end gap-6 mb-8">
                     <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-background shadow-xl">
-                        <AvatarImage src={channel.avatar} />
-                        <AvatarFallback>{channel.name[0]}</AvatarFallback>
+                        <AvatarImage src={channel.avatarUrl} />
+                        <AvatarFallback className="text-4xl font-bold">{channel.name[0]}</AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1 min-w-0 mb-2 md:mb-4">
-                        <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">{channel.name}</h1>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-black tracking-tight">{channel.name}</h1>
+                            {channel.verified && (
+                                <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full font-medium">
+                                    Verified
+                                </span>
+                            )}
+                        </div>
                         <div className="flex flex-col gap-1 text-muted-foreground font-medium">
                             <div className="flex items-center gap-2">
-                                <span className="text-foreground">@{channel.id}</span>
+                                <span className="text-foreground">{channel.handle}</span>
                                 <span>•</span>
-                                <span>{channel.subscribers} subscribers</span>
+                                <span>{channel.subscriberCount.toLocaleString()} subscribers</span>
                                 <span>•</span>
-                                <span>{channel.videos.length} videos</span>
+                                <span>{channel.videoCount} videos</span>
                             </div>
-                            <p className="max-w-2xl line-clamp-1 text-sm md:text-base">{channel.description}</p>
+                            {channel.description && (
+                                <p className="max-w-2xl line-clamp-2 text-sm md:text-base">{channel.description}</p>
+                            )}
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3 mb-4 w-full md:w-auto">
-                        <Button className="flex-1 md:flex-none rounded-full px-8 font-bold bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200 h-10 text-base">
-                            Subscribe
-                        </Button>
-                        <Button variant="secondary" size="icon" className="rounded-full h-10 w-10">
-                            <Bell className="w-5 h-5" />
-                        </Button>
+                        {isOwner ? (
+                            <>
+                                <Link href="/channel/settings">
+                                    <Button variant="secondary" className="rounded-full px-6 font-bold h-10">
+                                        <Settings className="w-4 h-4 mr-2" />
+                                        Manage Channel
+                                    </Button>
+                                </Link>
+                                <Button className="rounded-full px-6 font-bold bg-primary text-primary-foreground h-10">
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Upload
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button className="flex-1 md:flex-none rounded-full px-8 font-bold bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200 h-10 text-base">
+                                    Subscribe
+                                </Button>
+                                <Button variant="secondary" size="icon" className="rounded-full h-10 w-10">
+                                    <Bell className="w-5 h-5" />
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -94,21 +187,17 @@ export default async function ChannelPage({ params }: { params: Params }) {
                         </TabsList>
 
                         <TabsContent value="videos" className="mt-0">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-                                {channel.videos.length > 0 ? (
-                                    channel.videos.map((video) => (
-                                        <VideoCard key={video.id} video={video} />
-                                    ))
-                                ) : (
-                                    <div className="col-span-full py-20 text-center text-muted-foreground">
-                                        No videos uploaded yet.
-                                    </div>
+                            <div className="py-20 text-center text-muted-foreground">
+                                <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p className="text-lg font-medium mb-2">No videos uploaded yet</p>
+                                {isOwner && (
+                                    <p className="text-sm">Upload your first video to get started!</p>
                                 )}
                             </div>
                         </TabsContent>
                         <TabsContent value="home" className="mt-0">
                             <div className="py-10 text-center text-muted-foreground">
-                                Channel Home Layout coming soon...
+                                Customize your channel home layout coming soon...
                             </div>
                         </TabsContent>
                     </Tabs>

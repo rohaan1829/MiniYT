@@ -12,11 +12,16 @@ import prisma from './config/database';
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
 import userRouter from './routes/users';
+import channelRouter from './routes/channels';
 
 const app = express();
 
+import path from 'path';
+
 // Middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded by frontend
+}));
 app.use(cors({
     origin: config.frontendUrl,
     credentials: true,
@@ -27,10 +32,14 @@ app.use(morgan('combined', {
     stream: { write: (msg) => logger.http(msg.trim()) },
 }));
 
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Routes
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
+app.use('/api/channels', channelRouter);
 
 // 404 handler
 app.use((_req, res) => {
@@ -63,10 +72,16 @@ const startServer = async () => {
         await prisma.$connect();
         logger.info('✅ Database connected successfully');
 
-        // Test Redis connection
+        // Test Redis connection (optional)
         const redis = getRedisClient();
-        await redis.ping();
-        logger.info('✅ Redis connected successfully');
+        if (redis) {
+            try {
+                await redis.ping();
+                logger.info('✅ Redis connected successfully');
+            } catch (err) {
+                logger.warn('⚠️  Redis ping failed, continuing without cache');
+            }
+        }
 
         // Start listening
         app.listen(config.port, () => {

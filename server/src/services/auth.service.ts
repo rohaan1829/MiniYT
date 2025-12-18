@@ -60,9 +60,21 @@ export const register = async (input: RegisterInput) => {
 export const login = async (input: LoginInput) => {
     const { email, password } = input;
 
-    // Find user
+    // Find user with channel
     const user = await prisma.user.findUnique({
         where: { email },
+        include: {
+            channel: {
+                select: {
+                    id: true,
+                    handle: true,
+                    name: true,
+                    avatarUrl: true,
+                    subscriberCount: true,
+                    verified: true,
+                },
+            },
+        },
     });
 
     if (!user || !user.password) {
@@ -82,6 +94,7 @@ export const login = async (input: LoginInput) => {
             id: user.id,
             email: user.email,
             username: user.username,
+            channelId: user.channel?.id || null,
         },
         config.jwtSecret,
         { expiresIn: '7d' }
@@ -93,7 +106,8 @@ export const login = async (input: LoginInput) => {
             email: user.email,
             username: user.username,
             name: user.name,
-            image: user.image,
+            avatar: user.image,
+            channel: user.channel,
         },
         token,
     };
@@ -113,6 +127,19 @@ export const getProfile = async (userId: string) => {
                 select: {
                     videos: true,
                     comments: true,
+                },
+            },
+            channel: {
+                select: {
+                    id: true,
+                    handle: true,
+                    name: true,
+                    description: true,
+                    avatarUrl: true,
+                    bannerUrl: true,
+                    subscriberCount: true,
+                    videoCount: true,
+                    verified: true,
                 },
             },
         },
