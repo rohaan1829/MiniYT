@@ -21,6 +21,8 @@ export interface Video {
     description: string;
     likes: string;
     comments: Comment[];
+    category: string;
+    isLive?: boolean;
 }
 
 export interface Category {
@@ -82,7 +84,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "45K",
         description: "Join us as we explore the cutting-edge developments in artificial intelligence agents and how they are reshaping our digital future. We dive deep into autonomous systems, LLMs, and the ethical considerations of the next generation of AI. \n\nTimestamps:\n0:00 Intro\n2:30 What are AI Agents?\n5:45 Use Cases\n10:20 Future Outlook\n13:50 Conclusion",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "tech"
     },
     {
         id: '2',
@@ -97,7 +100,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "32K",
         description: "Is Phantom Liberty worth your time? We break down the new story, mechanics, and the 2.0 update that completely changes the game.",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "gaming"
     },
     {
         id: '3',
@@ -112,7 +116,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "1.5K",
         description: "Relaxing beats to help you study, work, or just chill out. Updated daily with the freshest tracks.",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "music"
     },
     {
         id: '4',
@@ -127,7 +132,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "28K",
         description: "Learn Next.js 15 from scratch! We cover App Router, Server Actions, React Server Components, and more in this comprehensive course.",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "programming"
     },
     {
         id: '5',
@@ -142,7 +148,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "150K",
         description: "Come with us on a journey through Kyoto, Tokyo, and Osaka as we discover the hidden gems and most famous sights of Japan.",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "learning"
     },
     {
         id: '6',
@@ -157,7 +164,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "45K",
         description: "Quantum computing explained in simple terms. How does it work and why does it change everything?",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "learning"
     },
     {
         id: '7',
@@ -172,7 +180,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "12K",
         description: "My productive minimalist desk setup for 2024. All gear links in description.",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "tech"
     },
     {
         id: '8',
@@ -187,7 +196,8 @@ export const VIDEOS: Video[] = [
         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         likes: "89K",
         description: "Quick and easy pasta recipe that tastes like a 5-star restaurant meal. Ingredients listed below.",
-        comments: COMMENTS_MOCK
+        comments: COMMENTS_MOCK,
+        category: "learning"
     }
     // ... existing videos ...
 ];

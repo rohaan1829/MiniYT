@@ -1,25 +1,73 @@
 'use client';
 
-import { Menu, Search, Bell } from 'lucide-react';
+import { Menu, Search, Bell, LogOut, User as UserIcon, Settings, Tv, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/store/useStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { ModeToggle } from '@/components/ui/mode-toggle';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
-import { useEffect, useState } from 'react';
-
-import { usePathname } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { searchApi } from '@/lib/api/search';
+import { cn } from '@/lib/utils';
+import { History, TrendingUp } from 'lucide-react';
 
 export default function Header() {
-    const { toggleSidebar, toggleDock, user } = useStore();
+    const { toggleSidebar, toggleDock, user, logout } = useStore();
     const [mounted, setMounted] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            if (searchQuery.length < 2) {
+                setSuggestions([]);
+                return;
+            }
+
+            try {
+                const response = await searchApi.getSuggestions(searchQuery);
+                if (response.success) {
+                    setSuggestions(response.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch suggestions:', error);
+            }
+        };
+
+        const timer = setTimeout(fetchSuggestions, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const isWatchPage = pathname?.startsWith('/watch');
 
@@ -29,6 +77,11 @@ export default function Header() {
         } else {
             toggleSidebar();
         }
+    };
+
+    const handleLogout = () => {
+        logout();
+        router.push('/');
     };
 
     return (
@@ -47,14 +100,13 @@ export default function Header() {
             </div>
 
             {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-8 hidden md:block">
+            <div className="flex-1 max-w-2xl mx-8 hidden md:block" ref={searchRef}>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-                        const query = formData.get('q');
-                        if (query) {
-                            window.location.href = `/results?search_query=${encodeURIComponent(query.toString())}`;
+                        if (searchQuery) {
+                            router.push(`/results?search_query=${encodeURIComponent(searchQuery)}`);
+                            setShowSuggestions(false);
                         }
                     }}
                     className="relative group"
@@ -66,8 +118,53 @@ export default function Header() {
                         name="q"
                         type="search"
                         placeholder="Search videos..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setShowSuggestions(true);
+                        }}
+                        onFocus={() => setShowSuggestions(true)}
                         className="w-full pl-12 h-12 text-lg bg-secondary border-transparent focus:bg-background transition-all rounded-full"
+                        autoComplete="off"
                     />
+
+                    {/* Suggestions Dropdown */}
+                    {showSuggestions && (suggestions.length > 0 || searchQuery.length >= 2) && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-2xl shadow-2xl py-2 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                            {suggestions.length > 0 ? (
+                                suggestions.map((suggestion, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-colors text-left"
+                                        onClick={() => {
+                                            setSearchQuery(suggestion.text);
+                                            router.push(`/results?search_query=${encodeURIComponent(suggestion.text)}`);
+                                            setShowSuggestions(false);
+                                        }}
+                                    >
+                                        {suggestion.type === 'channel' ? (
+                                            <Tv className="h-4 w-4 text-primary" />
+                                        ) : (
+                                            <Search className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                        <span className="flex-1 truncate font-medium">{suggestion.text}</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground px-1.5 py-0.5 bg-secondary rounded">
+                                            {suggestion.type}
+                                        </span>
+                                    </button>
+                                ))
+                            ) : searchQuery.length >= 2 && (
+                                <button
+                                    type="submit"
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-colors text-left font-medium"
+                                >
+                                    <Search className="h-4 w-4 text-muted-foreground" />
+                                    <span>Search for "{searchQuery}"</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </form>
             </div>
 
@@ -80,19 +177,103 @@ export default function Header() {
                 <Button variant="ghost" size="icon" className="rounded-full hover:bg-secondary w-10 h-10">
                     <Bell className="w-5 h-5" />
                 </Button>
-                {/* Prevent hydration mismatch by only rendering user state on client if crucial, but actually Button mismatch is from Dropdown likely. 
-                    However, `ModeToggle` uses Dropdown. Let's suppress hydration warning on the buttons just in case or ensure it works.
-                    Actually, the easiest fix for Radix ID mismatch is to use `dynamic` import OR standard client mount check.
-                 */}
-                {user ? (
-                    <Avatar className="h-10 w-10 border border-border">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback>{user.name[0]}</AvatarFallback>
-                    </Avatar>
+
+                {mounted ? (
+                    user ? (
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10 border border-border">
+                                <AvatarImage src={user.avatar || undefined} />
+                                <AvatarFallback>{user.name ? user.name[0] : user.username[0]}</AvatarFallback>
+                            </Avatar>
+
+                            <div className="relative">
+                                <button
+                                    onClick={() => setMenuOpen(!menuOpen)}
+                                    className="flex items-center gap-2 outline-none hover:bg-accent/50 p-1.5 rounded-lg transition-colors"
+                                >
+                                    <span className="text-sm font-medium">{user.name || user.username}</span>
+                                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {menuOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setMenuOpen(false)}
+                                        />
+                                        <div className="absolute right-0 top-12 z-50 w-56 rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+                                            <div className="px-2 py-1.5 text-sm font-normal">
+                                                <div className="flex flex-col space-y-1">
+                                                    <p className="text-sm font-medium leading-none">{user.name || user.username}</p>
+                                                    <p className="text-xs leading-none text-muted-foreground">
+                                                        {user.email}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="h-px bg-border -mx-1 my-1" />
+
+                                            <Link
+                                                href="/profile"
+                                                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                onClick={() => setMenuOpen(false)}
+                                            >
+                                                <UserIcon className="mr-2 h-4 w-4" />
+                                                <span>Profile</span>
+                                            </Link>
+
+                                            <Link
+                                                href="/settings"
+                                                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                onClick={() => setMenuOpen(false)}
+                                            >
+                                                <Settings className="mr-2 h-4 w-4" />
+                                                <span>Settings</span>
+                                            </Link>
+
+                                            {user.channel ? (
+                                                <Link
+                                                    href={`/channel/${user.channel.handle}`}
+                                                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                    onClick={() => setMenuOpen(false)}
+                                                >
+                                                    <Tv className="mr-2 h-4 w-4" />
+                                                    <span>Your Channel</span>
+                                                </Link>
+                                            ) : (
+                                                <Link
+                                                    href="/channel/create"
+                                                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground text-primary"
+                                                    onClick={() => setMenuOpen(false)}
+                                                >
+                                                    <Tv className="mr-2 h-4 w-4" />
+                                                    <span>Create Channel</span>
+                                                </Link>
+                                            )}
+
+                                            <div className="h-px bg-border -mx-1 my-1" />
+
+                                            <button
+                                                onClick={() => {
+                                                    handleLogout();
+                                                    setMenuOpen(false);
+                                                }}
+                                                className="relative w-full flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground text-red-600 hover:text-red-600"
+                                            >
+                                                <LogOut className="mr-2 h-4 w-4" />
+                                                <span>Log out</span>
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <Link href="/login">
+                            <Button className="rounded-full px-8 h-10 text-base bg-primary text-primary-foreground hover:bg-primary/90">Sign In</Button>
+                        </Link>
+                    )
                 ) : (
-                    <Link href="/login">
-                        <Button className="rounded-full px-8 h-10 text-base bg-primary text-primary-foreground hover:bg-primary/90">Sign In</Button>
-                    </Link>
+                    <div className="w-10 h-10 rounded-full bg-secondary animate-pulse" />
                 )}
             </div>
         </header>
