@@ -20,7 +20,9 @@ interface User {
     name: string;
     email: string;
     username: string;
+    bio?: string;
     avatar?: string;
+    settings?: any;
     channel?: Channel | null;
 }
 
@@ -48,7 +50,7 @@ interface AppState {
     logout: () => void;
     refreshAuth: () => Promise<void>;
     clearError: () => void;
-    updateProfile: (data: { name?: string; email?: string }) => Promise<void>;
+    updateProfile: (data: { name?: string; email?: string; bio?: string; settings?: any }) => Promise<void>;
     uploadAvatar: (file: File) => Promise<void>;
 
     // Channel actions

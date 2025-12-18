@@ -121,13 +121,17 @@ export const getProfile = async (userId: string) => {
             email: true,
             username: true,
             name: true,
+            bio: true,
             image: true,
+            settings: true,
             createdAt: true,
             _count: {
                 select: {
                     videos: true,
                     comments: true,
-                },
+                    watchHistory: true,
+                    playlists: true,
+                } as any,
             },
             channel: {
                 select: {
@@ -142,7 +146,7 @@ export const getProfile = async (userId: string) => {
                     verified: true,
                 },
             },
-        },
+        } as any,
     });
 
     if (!user) {
@@ -150,4 +154,24 @@ export const getProfile = async (userId: string) => {
     }
 
     return user;
+};
+export const changePassword = async (userId: string, currentPass: string, newPass: string) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+
+    if (!user || !user.password) {
+        throw new BadRequestError('User not found or password not set');
+    }
+
+    const isMatch = await bcrypt.compare(currentPass, user.password);
+    if (!isMatch) {
+        throw new BadRequestError('Current password does not match');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPass, 10);
+    await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+    });
 };

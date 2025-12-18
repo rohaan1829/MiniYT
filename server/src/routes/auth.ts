@@ -52,7 +52,7 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
 
 router.post('/refresh', authenticate, async (req, res, next) => {
     try {
-        const user = await authService.getProfile(req.user!.id);
+        const user = await authService.getProfile(req.user!.id) as any;
         const token = jwt.sign(
             {
                 id: user.id,
@@ -73,6 +73,26 @@ router.post('/refresh', authenticate, async (req, res, next) => {
                 },
                 token
             },
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+const changePasswordSchema = z.object({
+    body: z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8),
+    }),
+});
+
+router.patch('/change-password', authenticate, validate(changePasswordSchema), async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        await authService.changePassword(req.user!.id, currentPassword, newPassword);
+        res.json({
+            success: true,
+            message: 'Password changed successfully',
         });
     } catch (error) {
         next(error);

@@ -13,6 +13,8 @@ import healthRouter from './routes/health';
 import authRouter from './routes/auth';
 import userRouter from './routes/users';
 import channelRouter from './routes/channels';
+import historyRouter from './routes/history';
+import playlistRouter from './routes/playlists';
 
 const app = express();
 
@@ -40,6 +42,8 @@ app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/channels', channelRouter);
+app.use('/api/history', historyRouter);
+app.use('/api/playlists', playlistRouter);
 
 // 404 handler
 app.use((_req, res) => {

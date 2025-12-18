@@ -13,6 +13,8 @@ const updateProfileSchema = z.object({
     body: z.object({
         name: z.string().min(1).max(100).optional(),
         email: z.string().email().optional(),
+        bio: z.string().max(500).optional(),
+        settings: z.record(z.any()).optional(),
     }),
 });
 
@@ -36,7 +38,7 @@ router.patch(
     validate(updateProfileSchema),
     async (req: AuthRequest, res, next) => {
         try {
-            const { name, email } = req.body;
+            const { name, email, bio, settings } = req.body;
             const userId = req.user!.id;
 
             const updated = await prisma.user.update({
@@ -44,6 +46,8 @@ router.patch(
                 data: {
                     ...(name && { name }),
                     ...(email && { email }),
+                    ...(bio !== undefined && { bio }),
+                    ...(settings && { settings }),
                 },
                 select: {
                     id: true,
@@ -51,6 +55,8 @@ router.patch(
                     username: true,
                     name: true,
                     image: true,
+                    bio: true,
+                    settings: true,
                 },
             });
 

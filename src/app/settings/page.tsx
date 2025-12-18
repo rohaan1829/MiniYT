@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const profileSchema = z.object({
     name: z.string().min(1, 'Name is required').max(100),
     email: z.string().email('Invalid email address'),
+    bio: z.string().max(500).optional(),
 });
 
 export default function SettingsPage() {
@@ -33,6 +34,7 @@ export default function SettingsPage() {
         defaultValues: {
             name: user?.name || '',
             email: user?.email || '',
+            bio: user?.bio || '',
         },
     });
 
@@ -196,6 +198,25 @@ export default function SettingsPage() {
                                                     <FormLabel>Email Address</FormLabel>
                                                     <FormControl>
                                                         <Input placeholder="email@example.com" {...field} disabled={isLoading} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="bio"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Bio</FormLabel>
+                                                    <FormControl>
+                                                        <textarea
+                                                            className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            placeholder="Tell us about yourself"
+                                                            {...field}
+                                                            disabled={isLoading}
+                                                        />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
