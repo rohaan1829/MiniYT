@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Video } from '@/data/mockData';
 import { authApi, RegisterData } from '@/lib/api/auth';
 import { channelApi, CreateChannelData } from '@/lib/api/channels';
@@ -31,6 +31,7 @@ interface AppState {
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
+    rememberMe: boolean;
 
     // UI state
     sidebarOpen: boolean;
@@ -40,9 +41,9 @@ interface AppState {
     library: Video[];
 
     // Auth actions
-    setAuth: (user: User, token: string) => void;
+    setAuth: (user: User, token: string, rememberMe?: boolean) => void;
     clearAuth: () => void;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
     register: (data: RegisterData) => Promise<void>;
     logout: () => void;
     refreshAuth: () => Promise<void>;
@@ -72,6 +73,7 @@ export const useStore = create<AppState>()(
             isAuthenticated: false,
             isLoading: false,
             error: null,
+            rememberMe: false,
 
             // UI state
             sidebarOpen: true,
@@ -81,21 +83,28 @@ export const useStore = create<AppState>()(
             library: [],
 
             // Auth actions
-            setAuth: (user, token) => {
-                localStorage.setItem('auth_token', token);
-                set({ user, token, isAuthenticated: true, error: null });
+            setAuth: (user, token, rememberMe = false) => {
+                if (rememberMe) {
+                    localStorage.setItem('auth_token', token);
+                    sessionStorage.removeItem('auth_token');
+                } else {
+                    sessionStorage.setItem('auth_token', token);
+                    localStorage.removeItem('auth_token');
+                }
+                set({ user, token, isAuthenticated: true, error: null, rememberMe });
             },
 
             clearAuth: () => {
                 localStorage.removeItem('auth_token');
+                sessionStorage.removeItem('auth_token');
                 set({ user: null, token: null, isAuthenticated: false });
             },
 
-            login: async (email, password) => {
+            login: async (email, password, rememberMe = false) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await authApi.login({ email, password });
-                    get().setAuth(response.data.user, response.data.token);
+                    get().setAuth(response.data.user, response.data.token, rememberMe);
                 } catch (error: any) {
                     const message = error.response?.data?.message || 'Login failed';
                     set({ error: message });
@@ -234,9 +243,31 @@ export const useStore = create<AppState>()(
         }),
         {
             name: 'miniyt-storage',
+            storage: createJSONStorage(() => ({
+                getItem: (name) => {
+                    const local = localStorage.getItem(name);
+                    const session = sessionStorage.getItem(name);
+                    return local || session;
+                },
+                setItem: (name, value) => {
+                    const parsed = JSON.parse(value);
+                    if (parsed.state.rememberMe) {
+                        localStorage.setItem(name, value);
+                        sessionStorage.removeItem(name);
+                    } else {
+                        sessionStorage.setItem(name, value);
+                        localStorage.removeItem(name);
+                    }
+                },
+                removeItem: (name) => {
+                    localStorage.removeItem(name);
+                    sessionStorage.removeItem(name);
+                },
+            })),
             partialize: (state) => ({
                 user: state.user,
                 token: state.token,
+                rememberMe: state.rememberMe,
                 history: state.history,
                 library: state.library,
                 cinematicMode: state.cinematicMode,

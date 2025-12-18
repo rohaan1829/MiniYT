@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -28,7 +28,7 @@ const formSchema = z.object({
     name: z.string().min(1, 'Name is required').optional(),
 });
 
-export default function RegisterPage() {
+function RegisterForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { register, isLoading, error } = useStore();
@@ -220,5 +220,13 @@ export default function RegisterPage() {
                 </p>
             </CardFooter>
         </Card>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center h-[50vh]">Loading...</div>}>
+            <RegisterForm />
+        </Suspense>
     );
 }
