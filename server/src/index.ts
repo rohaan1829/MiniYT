@@ -77,9 +77,21 @@ process.on('SIGINT', gracefulShutdown);
 // Start server
 const startServer = async () => {
     try {
-        // Test database connection
-        await prisma.$connect();
-        logger.info('✅ Database connected successfully');
+        // Test database connection with retries
+        let retries = 5;
+        while (retries > 0) {
+            try {
+                await prisma.$connect();
+                logger.info('✅ Database connected successfully');
+                break;
+            } catch (err) {
+                retries -= 1;
+                logger.warn(`⚠️ Database connection failed. Retries left: ${retries}`);
+                if (retries === 0) throw err;
+                // Wait 2 seconds before retrying
+                await new Promise(res => setTimeout(res, 2000));
+            }
+        }
 
         // Test Redis connection (optional)
         const redis = getRedisClient();
