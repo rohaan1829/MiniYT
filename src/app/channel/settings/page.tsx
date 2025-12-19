@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useStore } from '@/store/useStore';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -26,7 +27,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import PageContainer from '@/components/layout/PageContainer';
+import FloatingDock from '@/components/layout/FloatingDock';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 const channelSettingsSchema = z.object({
     name: z.string().min(3, 'Channel name must be at least 3 characters').max(50),
@@ -37,7 +40,7 @@ type ChannelSettingsValues = z.infer<typeof channelSettingsSchema>;
 
 export default function ChannelSettingsPage() {
     const router = useRouter();
-    const { user, updateChannel, uploadChannelAvatar, uploadChannelBanner, isLoading } = useStore();
+    const { user, updateChannel, uploadChannelAvatar, uploadChannelBanner, isLoading, sidebarOpen } = useStore();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,6 +56,11 @@ export default function ChannelSettingsPage() {
     });
 
     useEffect(() => {
+        useStore.setState({
+            dockVisible: true,
+            sidebarOpen: false
+        });
+
         if (user && !user.channel) {
             router.push('/channel/create');
         } else if (user?.channel) {
@@ -136,10 +144,16 @@ export default function ChannelSettingsPage() {
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
                         </Link>
-                        <div>
+                        <div className="flex-1">
                             <h1 className="text-3xl font-black tracking-tight">Channel customization</h1>
                             <p className="text-muted-foreground">Manage your channel details and branding</p>
                         </div>
+                        <Link href="/channel/analytics">
+                            <Button className="rounded-full gap-2 bg-secondary hover:bg-secondary/80 text-foreground border border-border/50 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>
+                                View Analytics
+                            </Button>
+                        </Link>
                     </div>
 
                     <div className="space-y-8">
@@ -152,7 +166,7 @@ export default function ChannelSettingsPage() {
                             <CardContent className="space-y-8">
                                 {/* Banner Upload */}
                                 <div className="space-y-4">
-                                    <FormLabel>Banner Image</FormLabel>
+                                    <Label className="text-sm font-medium">Banner Image</Label>
                                     <div
                                         className="relative w-full h-40 rounded-xl overflow-hidden bg-muted group cursor-pointer border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors"
                                         onClick={() => bannerInputRef.current?.click()}
@@ -248,7 +262,7 @@ export default function ChannelSettingsPage() {
                                         />
 
                                         <div className="space-y-2">
-                                            <FormLabel>Handle</FormLabel>
+                                            <Label className="text-sm font-medium">Handle</Label>
                                             <div className="flex items-center gap-2">
                                                 <div className="px-4 py-2 bg-muted rounded-md text-muted-foreground font-mono">
                                                     {user.channel?.handle}
@@ -303,6 +317,7 @@ export default function ChannelSettingsPage() {
                     </div>
                 </div>
             </PageContainer>
+            <FloatingDock />
         </div>
     );
 }

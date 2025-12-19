@@ -99,4 +99,41 @@ router.patch('/change-password', authenticate, validate(changePasswordSchema), a
     }
 });
 
+router.post('/2fa/toggle', authenticate, async (req, res, next) => {
+    try {
+        const { enabled } = req.body;
+        const result = await authService.toggleTwoFactor(req.user!.id, enabled);
+        res.json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/sessions', authenticate, async (req, res, next) => {
+    try {
+        const sessions = await authService.getUserSessions(req.user!.id);
+        res.json({
+            success: true,
+            data: sessions,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.delete('/sessions/:id', authenticate, async (req, res, next) => {
+    try {
+        await authService.revokeSession(req.user!.id, req.params.id);
+        res.json({
+            success: true,
+            message: 'Session revoked successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 export default router;

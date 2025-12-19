@@ -23,6 +23,7 @@ interface User {
     bio?: string;
     avatar?: string;
     settings?: any;
+    twoFactorEnabled?: boolean;
     channel?: Channel | null;
 }
 
@@ -34,6 +35,7 @@ interface AppState {
     isLoading: boolean;
     error: string | null;
     rememberMe: boolean;
+    sessions: any[];
 
     // UI state
     sidebarOpen: boolean;
@@ -52,6 +54,10 @@ interface AppState {
     clearError: () => void;
     updateProfile: (data: { name?: string; email?: string; bio?: string; settings?: any }) => Promise<void>;
     uploadAvatar: (file: File) => Promise<void>;
+    changePassword: (data: any) => Promise<void>;
+    toggle2FA: (enabled: boolean) => Promise<void>;
+    fetchSessions: () => Promise<void>;
+    revokeSession: (sessionId: string) => Promise<void>;
 
     // Channel actions
     createChannel: (data: CreateChannelData) => Promise<void>;
@@ -88,6 +94,7 @@ export const useStore = create<AppState>()(
             cinematicMode: false,
             history: [],
             library: [],
+            sessions: [],
 
             // Auth actions
             setAuth: (user, token, rememberMe = false) => {
@@ -194,6 +201,63 @@ export const useStore = create<AppState>()(
                     throw error;
                 } finally {
                     set({ isLoading: false });
+                }
+            },
+
+            changePassword: async (data: any) => {
+                set({ isLoading: true, error: null });
+                try {
+                    await authApi.changePassword(data);
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Password change failed';
+                    set({ error: message });
+                    throw error;
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            toggle2FA: async (enabled: boolean) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const response = await authApi.toggle2FA(enabled);
+                    const currentUser = get().user;
+                    if (currentUser) {
+                        set({
+                            user: {
+                                ...currentUser,
+                                twoFactorEnabled: response.data.twoFactorEnabled,
+                            },
+                        });
+                    }
+                } catch (error: any) {
+                    const message = error.response?.data?.message || '2FA toggle failed';
+                    set({ error: message });
+                    throw error;
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchSessions: async () => {
+                try {
+                    const response = await authApi.getSessions();
+                    set({ sessions: response.data });
+                } catch (error: any) {
+                    console.error('Failed to fetch sessions:', error);
+                }
+            },
+
+            revokeSession: async (sessionId: string) => {
+                try {
+                    await authApi.revokeSession(sessionId);
+                    set((state) => ({
+                        sessions: state.sessions.filter((s: any) => s.id !== sessionId),
+                    }));
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Failed to revoke session';
+                    set({ error: message });
+                    throw error;
                 }
             },
 

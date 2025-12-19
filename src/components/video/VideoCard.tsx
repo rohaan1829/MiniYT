@@ -25,29 +25,35 @@ export default function VideoCard({ video, className }: VideoCardProps) {
     const duration = isReal ? formatDuration(video.duration) : video.duration;
 
     return (
-        <Link href={`/watch/${id}`} className={cn("block group cursor-pointer", className)}>
-            <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
-                <img
-                    src={thumbnail}
-                    alt={title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
-                    {duration}
+        <div className={cn("group cursor-pointer", className)}>
+            <Link href={`/watch/${id}`} className="block">
+                <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
+                    <img
+                        src={thumbnail}
+                        alt={title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
+                        {duration}
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                 </div>
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-            </div>
+            </Link>
 
             <div className="flex gap-3">
-                <Avatar className="h-9 w-9 cursor-pointer border border-white/10">
-                    <AvatarImage src={channelAvatar} />
-                    <AvatarFallback>{channelName?.[0]}</AvatarFallback>
-                </Avatar>
+                <Link href={`/channel/${channelHandle}`}>
+                    <Avatar className="h-9 w-9 border border-white/10 hover:border-white/20 transition-colors">
+                        <AvatarImage src={channelAvatar} />
+                        <AvatarFallback>{channelName?.[0]}</AvatarFallback>
+                    </Avatar>
+                </Link>
 
-                <div className="flex-1">
-                    <h3 className="font-semibold text-base leading-tight mb-1 line-clamp-2 group-hover:text-primary transition-colors text-foreground">
-                        {title}
-                    </h3>
+                <div className="flex-1 min-w-0">
+                    <Link href={`/watch/${id}`}>
+                        <h3 className="font-semibold text-base leading-tight mb-1 line-clamp-2 group-hover:text-primary transition-colors text-foreground">
+                            {title}
+                        </h3>
+                    </Link>
                     <div className="text-sm text-muted-foreground">
                         <Link href={`/channel/${channelHandle}`} className="hover:text-foreground transition-colors font-medium">
                             {channelName}
@@ -64,6 +70,6 @@ export default function VideoCard({ video, className }: VideoCardProps) {
                     <MoreVertical className="h-5 w-5" />
                 </button>
             </div>
-        </Link>
+        </div>
     );
 }

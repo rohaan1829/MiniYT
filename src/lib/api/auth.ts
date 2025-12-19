@@ -48,4 +48,24 @@ export const authApi = {
         });
         return response.data;
     },
+
+    changePassword: async (data: any) => {
+        const response = await apiClient.patch('/auth/change-password', data);
+        return response.data;
+    },
+
+    toggle2FA: async (enabled: boolean) => {
+        const response = await apiClient.post('/auth/2fa/toggle', { enabled });
+        return response.data;
+    },
+
+    getSessions: async () => {
+        const response = await apiClient.get('/auth/sessions');
+        return response.data;
+    },
+
+    revokeSession: async (sessionId: string) => {
+        const response = await apiClient.delete(`/auth/sessions/${sessionId}`);
+        return response.data;
+    },
 };
