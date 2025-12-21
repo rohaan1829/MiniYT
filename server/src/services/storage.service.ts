@@ -8,10 +8,12 @@ export interface StorageOptions {
     folder?: string;
     filename?: string;
     contentType?: string;
+    keepLocalFile?: boolean;
 }
 
 export interface IStorageProvider {
     uploadFile(file: Express.Multer.File, options?: StorageOptions): Promise<string>;
+    uploadFileFromPath(filePath: string, options?: StorageOptions): Promise<string>;
     deleteFile(fileUrl: string): Promise<void>;
     getPublicUrl(filePath: string): string;
 }
@@ -48,9 +50,37 @@ class S3StorageProvider implements IStorageProvider {
 
         await this.s3Client.send(command);
 
-        // Clean up local temp file
-        if (fs.existsSync(file.path)) {
+        // Clean up local temp file unless requested otherwise
+        if (!options?.keepLocalFile && fs.existsSync(file.path)) {
+            console.log(`[StorageService] Deleting local file: ${file.path}`);
             await fs.promises.unlink(file.path);
+        } else if (options?.keepLocalFile) {
+            console.log(`[StorageService] Keeping local file as requested: ${file.path}`);
+        }
+
+        return key;
+    }
+
+    async uploadFileFromPath(filePath: string, options?: StorageOptions): Promise<string> {
+        const folder = options?.folder || 'general';
+        const ext = path.extname(filePath);
+        const fileName = options?.filename || `${uuidv4()}${ext}`;
+        const key = `${folder}/${fileName}`;
+
+        const fileContent = await fs.promises.readFile(filePath);
+
+        const command = new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+            Body: fileContent,
+            ContentType: options?.contentType || 'application/octet-stream',
+        });
+
+        await this.s3Client.send(command);
+
+        // Clean up local file unless requested otherwise
+        if (!options?.keepLocalFile && fs.existsSync(filePath)) {
+            await fs.promises.unlink(filePath);
         }
 
         return key;

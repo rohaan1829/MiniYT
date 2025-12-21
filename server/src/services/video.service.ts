@@ -7,12 +7,14 @@ export interface CreateVideoData {
     thumbnailUrl?: string;
     videoUrl?: string;
     duration?: number;
+    status?: string;
 }
 
 export interface UpdateVideoData {
     title?: string;
     description?: string;
     thumbnailUrl?: string;
+    videoUrl?: string;
     status?: string;
 }
 
@@ -21,7 +23,7 @@ export class VideoService {
         return await prisma.video.create({
             data: {
                 ...data,
-                status: 'ready', // Automatically ready for now since we're not doing heavy processing yet
+                status: data.status || 'processing',
             },
             include: {
                 user: {
@@ -33,13 +35,29 @@ export class VideoService {
         });
     }
 
-    async getVideos(params: { category?: string; limit?: number; offset?: number } = {}) {
-        const { limit = 20, offset = 0 } = params;
+    async getVideos(params: { category?: string; userId?: string; channelId?: string; limit?: number; offset?: number; includeProcessing?: boolean } = {}) {
+        const { limit = 20, offset = 0, userId, channelId, includeProcessing = false } = params;
+
+        const where: any = {};
+
+        if (userId) {
+            where.userId = userId;
+        }
+
+        if (channelId) {
+            where.user = {
+                channel: {
+                    id: channelId
+                }
+            };
+        }
+
+        if (!includeProcessing && !userId && !channelId) {
+            where.status = 'ready';
+        }
 
         return await prisma.video.findMany({
-            where: {
-                status: 'ready',
-            },
+            where,
             include: {
                 user: {
                     include: {

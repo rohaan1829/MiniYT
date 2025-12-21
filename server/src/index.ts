@@ -18,6 +18,7 @@ import historyRouter from './routes/history';
 import playlistRouter from './routes/playlists';
 import videoRouter from './routes/videos';
 import searchRouter from './routes/search';
+import './workers/video.worker'; // Import worker to start it
 
 const app = express();
 

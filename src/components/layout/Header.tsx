@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Search, Bell, LogOut, User as UserIcon, Settings, Tv, ChevronDown } from 'lucide-react';
+import { Menu, Search, Bell, LogOut, User as UserIcon, Settings, Tv, ChevronDown, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/store/useStore';
@@ -21,6 +21,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { searchApi } from '@/lib/api/search';
 import { cn } from '@/lib/utils';
 import { History, TrendingUp } from 'lucide-react';
+import UploadDialog from '@/components/video/UploadDialog';
 
 export default function Header() {
     const { toggleSidebar, toggleDock, user, logout } = useStore();
@@ -29,6 +30,7 @@ export default function Header() {
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isUploadOpen, setIsUploadOpen] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
     const router = useRouter();
@@ -178,6 +180,17 @@ export default function Header() {
                     <Bell className="w-5 h-5" />
                 </Button>
 
+                {user && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsUploadOpen(true)}
+                        className="rounded-full hover:bg-secondary w-10 h-10"
+                    >
+                        <Video className="w-5 h-5" />
+                    </Button>
+                )}
+
                 {mounted ? (
                     user ? (
                         <div className="flex items-center gap-3">
@@ -276,6 +289,11 @@ export default function Header() {
                     <div className="w-10 h-10 rounded-full bg-secondary animate-pulse" />
                 )}
             </div>
+
+            <UploadDialog
+                isOpen={isUploadOpen}
+                onClose={() => setIsUploadOpen(false)}
+            />
         </header>
     );
 }

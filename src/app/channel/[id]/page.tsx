@@ -11,7 +11,10 @@ import { Bell, Settings, Upload, Loader2 } from 'lucide-react';
 import PageContainer from '@/components/layout/PageContainer';
 import { useStore } from '@/store/useStore';
 import { channelApi } from '@/lib/api/channels';
+import { videoApi } from '@/lib/api/videos';
 import Link from 'next/link';
+import UploadDialog from '@/components/video/UploadDialog';
+import VideoCard from '@/components/video/VideoCard';
 
 interface ChannelData {
     id: string;
@@ -36,6 +39,9 @@ export default function ChannelPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSubscribing, setIsSubscribing] = useState(false);
+    const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [videos, setVideos] = useState<any[]>([]);
+    const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 
     const isOwner = user && channel && user.id === channel.ownerId;
 
@@ -100,7 +106,28 @@ export default function ChannelPage() {
         }
 
         fetchChannel();
-    }, [id, user]); // Added user to dependency array to refetch when login state changes
+    }, [id, user]);
+
+    useEffect(() => {
+        async function fetchVideos() {
+            if (!channel?.id) return;
+
+            setIsLoadingVideos(true);
+            try {
+                // Fetch videos for this channel. Include processing videos if owner.
+                const response = await videoApi.getVideos({
+                    channelId: channel.id,
+                });
+                setVideos(response.data);
+            } catch (err) {
+                console.error('Failed to fetch channel videos:', err);
+            } finally {
+                setIsLoadingVideos(false);
+            }
+        }
+
+        fetchVideos();
+    }, [channel?.id]);
 
     if (loading) {
         return (
@@ -187,7 +214,10 @@ export default function ChannelPage() {
                                         Manage Channel
                                     </Button>
                                 </Link>
-                                <Button className="rounded-full px-6 font-bold bg-primary text-primary-foreground h-10">
+                                <Button
+                                    className="rounded-full px-6 font-bold bg-primary text-primary-foreground h-10"
+                                    onClick={() => setIsUploadOpen(true)}
+                                >
                                     <Upload className="w-4 h-4 mr-2" />
                                     Upload
                                 </Button>
@@ -196,8 +226,8 @@ export default function ChannelPage() {
                             <>
                                 <Button
                                     className={`flex-1 md:flex-none rounded-full px-8 font-bold h-10 text-base transition-all ${channel.isSubscribed
-                                            ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                                            : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
+                                        ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                                        : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
                                         }`}
                                     onClick={handleSubscribe}
                                     disabled={isSubscribing}
@@ -234,13 +264,25 @@ export default function ChannelPage() {
                         </TabsList>
 
                         <TabsContent value="videos" className="mt-0">
-                            <div className="py-20 text-center text-muted-foreground">
-                                <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                <p className="text-lg font-medium mb-2">No videos uploaded yet</p>
-                                {isOwner && (
-                                    <p className="text-sm">Upload your first video to get started!</p>
-                                )}
-                            </div>
+                            {isLoadingVideos ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            ) : videos.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+                                    {videos.map((video) => (
+                                        <VideoCard key={video.id} video={video} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-20 text-center text-muted-foreground">
+                                    <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                    <p className="text-lg font-medium mb-2">No videos uploaded yet</p>
+                                    {isOwner && (
+                                        <p className="text-sm">Upload your first video to get started!</p>
+                                    )}
+                                </div>
+                            )}
                         </TabsContent>
                         <TabsContent value="home" className="mt-0">
                             <div className="py-10 text-center text-muted-foreground">
@@ -250,6 +292,11 @@ export default function ChannelPage() {
                     </Tabs>
                 </div>
             </PageContainer>
+
+            <UploadDialog
+                isOpen={isUploadOpen}
+                onClose={() => setIsUploadOpen(false)}
+            />
         </div>
     );
 }

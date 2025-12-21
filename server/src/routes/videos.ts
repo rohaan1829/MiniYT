@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import path from 'path';
 import { videoService } from '../services/video.service';
 import { storageProvider } from '../services/storage.service';
+import { videoQueue, VIDEO_JOBS } from '../config/queue';
 import { authenticate } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import { z } from 'zod';
@@ -16,9 +18,11 @@ const createVideoSchema = z.object({
 // GET /api/videos - Get feed
 router.get('/', async (req, res, next) => {
     try {
-        const { category, limit, offset } = req.query;
+        const { category, userId, channelId, limit, offset } = req.query;
         const videos = await videoService.getVideos({
             category: category as string,
+            userId: userId as string,
+            channelId: channelId as string,
             limit: limit ? parseInt(limit as string) : undefined,
             offset: offset ? parseInt(offset as string) : undefined,
         });
@@ -61,8 +65,11 @@ router.post('/upload', authenticate, upload.fields([
 
         const data = createVideoSchema.parse(req.body);
 
-        // Upload to S3 using storageProvider
-        const videoKey = await storageProvider.uploadFile(videoFile, { folder: 'videos' });
+        // Upload to S3 using storageProvider. Keep local file for background processing.
+        const videoKey = await storageProvider.uploadFile(videoFile, {
+            folder: 'videos',
+            keepLocalFile: true
+        });
         let thumbnailKey: string | undefined;
 
         if (thumbnailFile) {
@@ -76,6 +83,17 @@ router.post('/upload', authenticate, upload.fields([
             videoUrl: storageProvider.getPublicUrl(videoKey),
             thumbnailUrl: thumbnailKey ? storageProvider.getPublicUrl(thumbnailKey) : undefined,
             duration: 0, // Placeholder
+        });
+
+        // Update video status to 'processing' (it's 'ready' by default currently)
+        await videoService.updateVideo(video.id, req.user!.id, { status: 'processing' });
+
+        // Add to processing queue with absolute path
+        await videoQueue.add(VIDEO_JOBS.PROCESS_VIDEO, {
+            videoId: video.id,
+            userId: req.user!.id,
+            videoUrl: video.videoUrl,
+            tempPath: path.resolve(videoFile.path)
         });
 
         return res.status(201).json({ success: true, data: video });
