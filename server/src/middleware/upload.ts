@@ -1,33 +1,21 @@
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
+import { UPLOAD_DIRS, initializeUploadDirs } from '../utils/paths';
 
-// Ensure upload directories exist
-const uploadDirs = [
-    'uploads/profiles',
-    'uploads/banners',
-    'uploads/channels',
-    'uploads/videos',
-    'uploads/thumbnails'
-];
-
-uploadDirs.forEach(dir => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-});
+// Ensure upload directories exist on startup
+initializeUploadDirs();
 
 const storage = multer.diskStorage({
     destination: (req, _file, cb) => {
-        let dest = 'uploads/profiles';
+        let dest = UPLOAD_DIRS.PROFILES;
 
         if (req.originalUrl.includes('/banner')) {
-            dest = 'uploads/banners';
+            dest = UPLOAD_DIRS.BANNERS;
         } else if (req.originalUrl.includes('/avatar')) {
-            dest = 'uploads/channels';
+            dest = UPLOAD_DIRS.CHANNELS;
         } else if (req.originalUrl.includes('/videos')) {
-            dest = 'uploads/videos';
+            dest = UPLOAD_DIRS.VIDEOS;
         }
 
         cb(null, dest);

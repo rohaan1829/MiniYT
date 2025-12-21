@@ -30,14 +30,16 @@ export const videoWorker = new Worker(
 
             // Clean up the entire processing directory
             const outputBase = path.dirname(tempPath);
-            const videoFolder = path.basename(tempPath, path.extname(tempPath));
+            const videoFolder = path.basename(tempPath, path.extname(tempPath)) + '_processing';
             const localProcessDir = path.join(outputBase, videoFolder);
 
+            console.log(`[Worker] Cleaning up processing directory: ${localProcessDir}`);
             if (fs.existsSync(localProcessDir)) {
                 fs.rmSync(localProcessDir, { recursive: true, force: true });
             }
 
-            // Still clean up original temp file if it's not in the processDir
+            // Still clean up original temp file 
+            console.log(`[Worker] Cleaning up original temp file: ${tempPath}`);
             if (fs.existsSync(tempPath)) {
                 fs.unlinkSync(tempPath);
             }

@@ -39,6 +39,7 @@ class S3StorageProvider implements IStorageProvider {
         const fileName = options?.filename || `${uuidv4()}${ext}`;
         const key = `${folder}/${fileName}`;
 
+        console.log(`[StorageService] Reading file for upload: ${file.path}`);
         const fileContent = await fs.promises.readFile(file.path);
 
         const command = new PutObjectCommand({
@@ -67,6 +68,7 @@ class S3StorageProvider implements IStorageProvider {
         const fileName = options?.filename || `${uuidv4()}${ext}`;
         const key = `${folder}/${fileName}`;
 
+        console.log(`[StorageService] Reading file from path: ${filePath}`);
         const fileContent = await fs.promises.readFile(filePath);
 
         const command = new PutObjectCommand({
@@ -80,6 +82,7 @@ class S3StorageProvider implements IStorageProvider {
 
         // Clean up local file unless requested otherwise
         if (!options?.keepLocalFile && fs.existsSync(filePath)) {
+            console.log(`[StorageService] Deleting local file: ${filePath}`);
             await fs.promises.unlink(filePath);
         }
 

@@ -10,6 +10,8 @@ export class TranscodeService {
             const fileName = `thumb-${path.basename(videoPath, path.extname(videoPath))}.png`;
             const outputPath = path.join(outputFolder, fileName);
 
+            console.log(`[TranscodeService] Extracting thumbnail to: ${outputPath}`);
+
             ffmpeg(videoPath)
                 .screenshots({
                     timestamps: ['00:00:01'],
@@ -17,8 +19,14 @@ export class TranscodeService {
                     folder: outputFolder,
                     size: '1280x720'
                 })
-                .on('end', () => resolve(outputPath))
-                .on('error', (err) => reject(err));
+                .on('end', () => {
+                    console.log(`[TranscodeService] Thumbnail extraction complete`);
+                    resolve(outputPath);
+                })
+                .on('error', (err) => {
+                    console.error(`[TranscodeService] Thumbnail extraction failed: ${err.message}`);
+                    reject(err);
+                });
         });
     }
 
@@ -28,6 +36,8 @@ export class TranscodeService {
             if (!fs.existsSync(hlsFolder)) {
                 fs.mkdirSync(hlsFolder, { recursive: true });
             }
+
+            console.log(`[TranscodeService] Generating HLS in: ${hlsFolder}`);
 
             ffmpeg(videoPath)
                 .outputOptions([
@@ -39,8 +49,14 @@ export class TranscodeService {
                     '-f hls'
                 ])
                 .output(path.join(hlsFolder, 'index.m3u8'))
-                .on('end', () => resolve(hlsFolder))
-                .on('error', (err) => reject(err))
+                .on('end', () => {
+                    console.log(`[TranscodeService] HLS generation complete`);
+                    resolve(hlsFolder);
+                })
+                .on('error', (err) => {
+                    console.error(`[TranscodeService] HLS generation failed: ${err.message}`);
+                    reject(err);
+                })
                 .run();
         });
     }
@@ -49,10 +65,17 @@ export class TranscodeService {
         tempVideoPath: string,
         videoId: string
     ): Promise<{ videoUrl: string; thumbnailUrl: string }> {
+        console.log(`[TranscodeService] Processing video: ${videoId}, path: ${tempVideoPath}`);
+
+        if (!fs.existsSync(tempVideoPath)) {
+            throw new Error(`Input video file not found at path: ${tempVideoPath}`);
+        }
+
         const outputBase = path.dirname(tempVideoPath);
-        const videoFolder = path.basename(tempVideoPath, path.extname(tempVideoPath));
+        const videoFolder = path.basename(tempVideoPath, path.extname(tempVideoPath)) + '_processing';
         const processDir = path.join(outputBase, videoFolder);
 
+        console.log(`[TranscodeService] Creating process directory: ${processDir}`);
         if (!fs.existsSync(processDir)) {
             fs.mkdirSync(processDir, { recursive: true });
         }

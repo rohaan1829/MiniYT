@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import path from 'path';
 import { videoService } from '../services/video.service';
 import { storageProvider } from '../services/storage.service';
 import { videoQueue, VIDEO_JOBS } from '../config/queue';
@@ -93,7 +92,7 @@ router.post('/upload', authenticate, upload.fields([
             videoId: video.id,
             userId: req.user!.id,
             videoUrl: video.videoUrl,
-            tempPath: path.resolve(videoFile.path)
+            tempPath: videoFile.path
         });
 
         return res.status(201).json({ success: true, data: video });
