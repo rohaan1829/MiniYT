@@ -2,10 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/env';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 export interface StorageOptions {
     folder?: string;
     filename?: string;
+    contentType?: string;
 }
 
 export interface IStorageProvider {
@@ -14,65 +16,65 @@ export interface IStorageProvider {
     getPublicUrl(filePath: string): string;
 }
 
-class LocalStorageProvider implements IStorageProvider {
-    private uploadDir = path.join(__dirname, '../../uploads');
+class S3StorageProvider implements IStorageProvider {
+    private s3Client: S3Client;
+    private bucketName: string;
 
     constructor() {
-        if (!fs.existsSync(this.uploadDir)) {
-            fs.mkdirSync(this.uploadDir, { recursive: true });
-        }
+        this.s3Client = new S3Client({
+            region: config.aws.region,
+            credentials: {
+                accessKeyId: config.aws.accessKeyId,
+                secretAccessKey: config.aws.secretAccessKey,
+            },
+        });
+        this.bucketName = config.aws.bucket;
     }
 
     async uploadFile(file: Express.Multer.File, options?: StorageOptions): Promise<string> {
         const folder = options?.folder || 'general';
-        const targetDir = path.join(this.uploadDir, folder);
-
-        if (!fs.existsSync(targetDir)) {
-            fs.mkdirSync(targetDir, { recursive: true });
-        }
-
         const ext = path.extname(file.originalname);
         const fileName = options?.filename || `${uuidv4()}${ext}`;
-        const filePath = path.join(targetDir, fileName);
+        const key = `${folder}/${fileName}`;
 
-        await fs.promises.rename(file.path, filePath);
+        const fileContent = await fs.promises.readFile(file.path);
 
-        return `/uploads/${folder}/${fileName}`;
-    }
+        const command = new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+            Body: fileContent,
+            ContentType: options?.contentType || file.mimetype,
+        });
 
-    async deleteFile(fileUrl: string): Promise<void> {
-        if (!fileUrl.startsWith('/uploads/')) return;
+        await this.s3Client.send(command);
 
-        const relativePath = fileUrl.replace('/uploads/', '');
-        const absolutePath = path.join(this.uploadDir, relativePath);
-
-        if (fs.existsSync(absolutePath)) {
-            await fs.promises.unlink(absolutePath);
+        // Clean up local temp file
+        if (fs.existsSync(file.path)) {
+            await fs.promises.unlink(file.path);
         }
+
+        return key;
     }
 
-    getPublicUrl(fileUrl: string): string {
-        // In local dev, it's just the backend URL + the path
-        const baseUrl = config.nodeEnv === 'production' ? '' : `http://localhost:${config.port}`;
-        return `${baseUrl}${fileUrl}`;
-    }
-}
-
-// Future S3 implementation placeholder
-/*
-class S3StorageProvider implements IStorageProvider {
-    async uploadFile(file: Express.Multer.File, options?: StorageOptions): Promise<string> {
-        // S3 upload logic here
-        return '';
-    }
     async deleteFile(fileUrl: string): Promise<void> {
-        // S3 delete logic here
+        // If it's a full URL, extract the key
+        let key = fileUrl;
+        if (fileUrl.includes('.amazonaws.com/')) {
+            key = fileUrl.split('.amazonaws.com/')[1];
+        }
+
+        const command = new DeleteObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+        });
+
+        await this.s3Client.send(command);
     }
-    getPublicUrl(filePath: string): string {
-        // S3 public URL logic here
-        return '';
+
+    getPublicUrl(key: string): string {
+        if (key.startsWith('http')) return key;
+        return `https://${this.bucketName}.s3.${config.aws.region}.amazonaws.com/${key}`;
     }
 }
-*/
 
-export const storageProvider: IStorageProvider = new LocalStorageProvider();
+export const storageProvider: IStorageProvider = new S3StorageProvider();

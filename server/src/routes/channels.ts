@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { validate } from '../middleware/validator';
 import { authenticate, optionalAuthenticate, AuthRequest } from '../middleware/auth';
 import { upload } from '../middleware/upload';
+import { storageProvider } from '../services/storage.service';
 import * as channelService from '../services/channel.service';
 import { BadRequestError } from '../utils/errors';
 import prisma from '../config/database';
@@ -130,7 +131,10 @@ router.post(
             }
 
             const channelId = req.params.channelId;
-            const imageUrl = `/uploads/channels/${req.file.filename}`;
+
+            // Upload to S3
+            const key = await storageProvider.uploadFile(req.file, { folder: 'channels' });
+            const imageUrl = storageProvider.getPublicUrl(key);
 
             // Verify ownership via service or directly
             const channel = await (prisma as any).channel.findUnique({
@@ -138,6 +142,8 @@ router.post(
             });
 
             if (!channel || channel.ownerId !== req.user!.id) {
+                // Should probably delete the uploaded file from S3 if ownership fails
+                await storageProvider.deleteFile(key);
                 throw new BadRequestError('Channel not found or you are not the owner');
             }
 
@@ -169,7 +175,10 @@ router.post(
             }
 
             const channelId = req.params.channelId;
-            const imageUrl = `/uploads/banners/${req.file.filename}`;
+
+            // Upload to S3
+            const key = await storageProvider.uploadFile(req.file, { folder: 'banners' });
+            const imageUrl = storageProvider.getPublicUrl(key);
 
             // Verify ownership
             const channel = await (prisma as any).channel.findUnique({
@@ -177,6 +186,7 @@ router.post(
             });
 
             if (!channel || channel.ownerId !== req.user!.id) {
+                await storageProvider.deleteFile(key);
                 throw new BadRequestError('Channel not found or you are not the owner');
             }
 

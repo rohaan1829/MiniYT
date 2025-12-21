@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { videoService } from '../services/video.service';
+import { storageProvider } from '../services/storage.service';
 import { authenticate } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import { z } from 'zod';
@@ -60,12 +61,20 @@ router.post('/upload', authenticate, upload.fields([
 
         const data = createVideoSchema.parse(req.body);
 
+        // Upload to S3 using storageProvider
+        const videoKey = await storageProvider.uploadFile(videoFile, { folder: 'videos' });
+        let thumbnailKey: string | undefined;
+
+        if (thumbnailFile) {
+            thumbnailKey = await storageProvider.uploadFile(thumbnailFile, { folder: 'thumbnails' });
+        }
+
         const video = await videoService.createVideo({
             userId: req.user!.id,
             title: data.title,
             description: data.description,
-            videoUrl: `/uploads/videos/${videoFile.filename}`,
-            thumbnailUrl: thumbnailFile ? `/uploads/videos/${thumbnailFile.filename}` : undefined,
+            videoUrl: storageProvider.getPublicUrl(videoKey),
+            thumbnailUrl: thumbnailKey ? storageProvider.getPublicUrl(thumbnailKey) : undefined,
             duration: 0, // Placeholder
         });
 
