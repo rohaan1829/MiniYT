@@ -12,6 +12,8 @@ const storage = multer.diskStorage({
             dest = 'uploads/channels';
         } else if (req.originalUrl.includes('/videos')) {
             dest = 'uploads/videos';
+        } else if (req.originalUrl.includes('/posts')) {
+            dest = 'uploads/posts';
         }
 
         cb(null, dest);

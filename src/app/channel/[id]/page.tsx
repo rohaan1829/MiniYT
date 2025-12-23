@@ -12,6 +12,8 @@ import PageContainer from '@/components/layout/PageContainer';
 import { useStore } from '@/store/useStore';
 import { channelApi } from '@/lib/api/channels';
 import Link from 'next/link';
+import PostsFeed from '@/components/posts/PostsFeed';
+import VideoUploadDialog from '@/components/video/VideoUploadDialog';
 
 interface ChannelData {
     id: string;
@@ -36,6 +38,7 @@ export default function ChannelPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSubscribing, setIsSubscribing] = useState(false);
+    const [isUploadOpen, setIsUploadOpen] = useState(false);
 
     const isOwner = user && channel && user.id === channel.ownerId;
 
@@ -71,36 +74,36 @@ export default function ChannelPage() {
         }
     };
 
-    useEffect(() => {
-        async function fetchChannel() {
-            if (!id) return;
+    const fetchChannelData = async () => {
+        if (!id) return;
 
-            setLoading(true);
-            setError(null);
+        setLoading(true);
+        setError(null);
 
-            try {
-                let response;
-                // If the ID starts with @, it's a handle
-                if (id.startsWith('@') || id.startsWith('%40')) {
-                    const handle = id.startsWith('%40') ? '@' + id.slice(3) : id;
-                    response = await channelApi.getByHandle(handle);
-                } else {
-                    response = await channelApi.getChannel(id);
-                }
-                setChannel(response.data);
-            } catch (err: any) {
-                if (err.response?.status === 404) {
-                    setError('Channel not found');
-                } else {
-                    setError(err.response?.data?.message || 'Failed to load channel');
-                }
-            } finally {
-                setLoading(false);
+        try {
+            let response;
+            // If the ID starts with @, it's a handle
+            if (id.startsWith('@') || id.startsWith('%40')) {
+                const handle = id.startsWith('%40') ? '@' + id.slice(3) : id;
+                response = await channelApi.getByHandle(handle);
+            } else {
+                response = await channelApi.getChannel(id);
             }
+            setChannel(response.data);
+        } catch (err: any) {
+            if (err.response?.status === 404) {
+                setError('Channel not found');
+            } else {
+                setError(err.response?.data?.message || 'Failed to load channel');
+            }
+        } finally {
+            setLoading(false);
         }
+    };
 
-        fetchChannel();
-    }, [id, user]); // Added user to dependency array to refetch when login state changes
+    useEffect(() => {
+        fetchChannelData();
+    }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (loading) {
         return (
@@ -187,7 +190,10 @@ export default function ChannelPage() {
                                         Manage Channel
                                     </Button>
                                 </Link>
-                                <Button className="rounded-full px-6 font-bold bg-primary text-primary-foreground h-10">
+                                <Button
+                                    onClick={() => setIsUploadOpen(true)}
+                                    className="rounded-full px-6 font-bold bg-primary text-primary-foreground h-10"
+                                >
                                     <Upload className="w-4 h-4 mr-2" />
                                     Upload
                                 </Button>
@@ -196,8 +202,8 @@ export default function ChannelPage() {
                             <>
                                 <Button
                                     className={`flex-1 md:flex-none rounded-full px-8 font-bold h-10 text-base transition-all ${channel.isSubscribed
-                                            ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                                            : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
+                                        ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                                        : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
                                         }`}
                                     onClick={handleSubscribe}
                                     disabled={isSubscribing}
@@ -222,7 +228,7 @@ export default function ChannelPage() {
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
                     <Tabs defaultValue="videos" className="w-full">
                         <TabsList className="bg-transparent border-b border-white/10 w-full justify-start h-auto p-0 rounded-none mb-8">
-                            {['Home', 'Videos', 'Shorts', 'Live', 'Playlists', 'Community'].map((tab) => (
+                            {['Home', 'Videos', 'Posts', 'Shorts', 'Live', 'Playlists'].map((tab) => (
                                 <TabsTrigger
                                     key={tab}
                                     value={tab.toLowerCase()}
@@ -247,8 +253,19 @@ export default function ChannelPage() {
                                 Customize your channel home layout coming soon...
                             </div>
                         </TabsContent>
+                        <TabsContent value="posts" className="mt-0">
+                            <PostsFeed channelId={channel.id} isOwner={isOwner || false} />
+                        </TabsContent>
                     </Tabs>
                 </div>
+
+                {channel && (
+                    <VideoUploadDialog
+                        isOpen={isUploadOpen}
+                        onClose={() => setIsUploadOpen(false)}
+                        onSuccess={fetchChannelData}
+                    />
+                )}
             </PageContainer>
         </div>
     );

@@ -61,12 +61,19 @@ router.post('/upload', authenticate, upload.fields([
         const data = createVideoSchema.parse(req.body);
 
         const video = await videoService.createVideo({
-            userId: req.user!.id,
+            userId: (req as any).user.id,
             title: data.title,
             description: data.description,
             videoUrl: `/uploads/videos/${videoFile.filename}`,
             thumbnailUrl: thumbnailFile ? `/uploads/videos/${thumbnailFile.filename}` : undefined,
-            duration: 0, // Placeholder
+            duration: 0,
+        });
+
+        // Trigger background processing - don't await
+        import('../services/video-processor.service').then(({ videoProcessorService }) => {
+            videoProcessorService.processVideo(video.id).catch(err =>
+                logger.error(`Failed to start processing for video ${video.id}:`, err)
+            );
         });
 
         return res.status(201).json({ success: true, data: video });

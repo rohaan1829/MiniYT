@@ -22,6 +22,7 @@ interface User {
     username: string;
     bio?: string;
     avatar?: string;
+    image?: string;
     settings?: any;
     twoFactorEnabled?: boolean;
     channel?: Channel | null;
