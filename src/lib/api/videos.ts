@@ -8,6 +8,9 @@ export interface VideoData {
     videoUrl: string;
     views: number;
     duration: number;
+    status: 'pending' | 'processing' | 'ready' | 'failed';
+    processingProgress?: number;
+    processingError?: string;
     createdAt: string;
     user: {
         id: string;
@@ -49,6 +52,11 @@ export const videoApi = {
 
     delete: async (id: string) => {
         const response = await apiClient.delete(`/videos/${id}`);
+        return response.data;
+    },
+
+    getTrendingVideos: async (params?: { category?: string; timeRange?: string; limit?: number; offset?: number }) => {
+        const response = await apiClient.get('/trending', { params });
         return response.data;
     },
 };

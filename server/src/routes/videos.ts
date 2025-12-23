@@ -76,12 +76,19 @@ router.post('/upload', authenticate, upload.fields([
         }
 
         const video = await videoService.createVideo({
-            userId: req.user!.id,
+            userId: (req as any).user.id,
             title: data.title,
             description: data.description,
-            videoUrl: storageProvider.getPublicUrl(videoKey),
-            thumbnailUrl: thumbnailKey ? storageProvider.getPublicUrl(thumbnailKey) : undefined,
-            duration: 0, // Placeholder
+            videoUrl: `/uploads/videos/${videoFile.filename}`,
+            thumbnailUrl: thumbnailFile ? `/uploads/videos/${thumbnailFile.filename}` : undefined,
+            duration: 0,
+        });
+
+        // Trigger background processing - don't await
+        import('../services/video-processor.service').then(({ videoProcessorService }) => {
+            videoProcessorService.processVideo(video.id).catch(err =>
+                logger.error(`Failed to start processing for video ${video.id}:`, err)
+            );
         });
 
         // Update video status to 'processing' (it's 'ready' by default currently)

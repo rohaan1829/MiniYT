@@ -19,6 +19,10 @@ import playlistRouter from './routes/playlists';
 import videoRouter from './routes/videos';
 import searchRouter from './routes/search';
 import './workers/video.worker'; // Import worker to start it
+import trendingRouter from './routes/trending.routes';
+import postRouter from './routes/posts.routes';
+import { startTrendingWorker, stopTrendingWorker } from './workers/trending.worker';
+import { startVideoWorker, stopVideoWorker } from './workers/video.worker';
 
 const app = express();
 
@@ -50,6 +54,8 @@ app.use('/api/history', historyRouter);
 app.use('/api/playlists', playlistRouter);
 app.use('/api/videos', videoRouter);
 app.use('/api/search', searchRouter);
+app.use('/api/trending', trendingRouter);
+app.use('/api/posts', postRouter);
 
 // 404 handler
 app.use((_req, res) => {
@@ -65,6 +71,12 @@ app.use(errorHandler);
 // Graceful shutdown
 const gracefulShutdown = async () => {
     logger.info('Shutting down gracefully...');
+
+    stopTrendingWorker();
+    logger.info('Trending worker stopped');
+
+    stopVideoWorker();
+    logger.info('Video worker stopped');
 
     await prisma.$disconnect();
     logger.info('Database connection closed');
@@ -110,6 +122,10 @@ const startServer = async () => {
             logger.info(`🚀 Server running on port ${config.port}`);
             logger.info(`📝 Environment: ${config.nodeEnv}`);
             logger.info(`🌐 Frontend URL: ${config.frontendUrl}`);
+
+            // Start workers
+            startTrendingWorker();
+            startVideoWorker();
         });
     } catch (error) {
         logger.error('Failed to start server:', error);

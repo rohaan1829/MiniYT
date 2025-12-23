@@ -23,7 +23,7 @@ export class VideoService {
         return await prisma.video.create({
             data: {
                 ...data,
-                status: data.status || 'processing',
+                status: 'pending',
             },
             include: {
                 user: {

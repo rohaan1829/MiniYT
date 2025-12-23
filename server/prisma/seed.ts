@@ -6,13 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Starting database seeding...');
 
-    // 1. Clear existing data
+    // 1. Clear existing data (NEVER delete users - preserve user accounts)
+    await prisma.viewSnapshot.deleteMany();
     await prisma.subscription.deleteMany();
     await prisma.video.deleteMany();
     await prisma.channel.deleteMany();
-    await prisma.user.deleteMany();
+    // NOTE: Users are preserved intentionally
 
-    console.log('🧹 Database cleared');
+    console.log('🧹 Database cleared (users preserved)');
 
     const hashedPassword = await bcrypt.hash('password123', 10);
 
@@ -82,7 +83,9 @@ async function main() {
                         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                         views: 1200000,
                         duration: 860,
-                        status: 'ready'
+                        status: 'ready',
+                        category: 'education',
+                        publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
                     },
                     {
                         userId: user.id,
@@ -92,7 +95,9 @@ async function main() {
                         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                         views: 900000,
                         duration: 605,
-                        status: 'ready'
+                        status: 'ready',
+                        category: 'education',
+                        publishedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // 2 days ago
                     }
                 ]
             });
@@ -107,7 +112,26 @@ async function main() {
                         videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                         views: 850000,
                         duration: 1335,
-                        status: 'ready'
+                        status: 'ready',
+                        category: 'gaming',
+                        publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+                    }
+                ]
+            });
+        } else if (c.username === 'chillhop') {
+            await prisma.video.createMany({
+                data: [
+                    {
+                        userId: user.id,
+                        title: "Lo-Fi Beats to Study/Relax To",
+                        description: "Smooth beats for your daily grind.",
+                        thumbnailUrl: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1000&auto=format&fit=crop",
+                        videoUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+                        views: 2500000,
+                        duration: 3600,
+                        status: 'ready',
+                        category: 'music',
+                        publishedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
                     }
                 ]
             });
