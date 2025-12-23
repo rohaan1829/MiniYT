@@ -18,6 +18,7 @@ import historyRouter from './routes/history';
 import playlistRouter from './routes/playlists';
 import videoRouter from './routes/videos';
 import searchRouter from './routes/search';
+import './workers/video.worker'; // Import worker to start it
 import trendingRouter from './routes/trending.routes';
 import postRouter from './routes/posts.routes';
 import { startTrendingWorker, stopTrendingWorker } from './workers/trending.worker';
@@ -35,8 +36,8 @@ app.use(cors({
     origin: config.frontendUrl,
     credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(morgan('combined', {
     stream: { write: (msg: string) => logger.http(msg.trim()) },
 }));
@@ -89,9 +90,21 @@ process.on('SIGINT', gracefulShutdown);
 // Start server
 const startServer = async () => {
     try {
-        // Test database connection
-        await prisma.$connect();
-        logger.info('✅ Database connected successfully');
+        // Test database connection with retries
+        let retries = 5;
+        while (retries > 0) {
+            try {
+                await prisma.$connect();
+                logger.info('✅ Database connected successfully');
+                break;
+            } catch (err) {
+                retries -= 1;
+                logger.warn(`⚠️ Database connection failed. Retries left: ${retries}`);
+                if (retries === 0) throw err;
+                // Wait 2 seconds before retrying
+                await new Promise(res => setTimeout(res, 2000));
+            }
+        }
 
         // Test Redis connection (optional)
         const redis = getRedisClient();

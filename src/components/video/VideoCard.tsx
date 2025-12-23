@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatViews, formatTimeAgo, formatDuration } from '@/lib/formatters';
 import Link from 'next/link';
@@ -23,19 +23,43 @@ export default function VideoCard({ video, className }: VideoCardProps) {
     const views = isReal ? formatViews(video.views) : video.views;
     const postedAt = isReal ? formatTimeAgo(video.createdAt) : video.postedAt;
     const duration = isReal ? formatDuration(video.duration) : video.duration;
+    const isProcessing = isReal && video.status === 'processing';
+    const isFailed = isReal && video.status === 'failed';
 
     return (
         <div className={cn("group cursor-pointer", className)}>
-            <Link href={`/watch/${id}`} className="block">
+            <Link href={isProcessing ? "#" : `/watch/${id}`} className={cn("block", isProcessing && "cursor-not-allowed")}>
                 <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
-                    <img
-                        src={thumbnail}
-                        alt={title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
-                        {duration}
-                    </div>
+                    {thumbnail ? (
+                        <img
+                            src={thumbnail}
+                            alt={title}
+                            className={cn(
+                                "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                                isProcessing && "blur-sm opacity-50"
+                            )}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-secondary/50">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                        </div>
+                    )}
+                    {!isProcessing && duration !== "0:00" && (
+                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
+                            {duration}
+                        </div>
+                    )}
+                    {isProcessing && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white p-4">
+                            <Loader2 className="h-6 w-6 animate-spin mb-2" />
+                            <span className="text-xs font-bold uppercase tracking-wider">Processing</span>
+                        </div>
+                    )}
+                    {isFailed && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-500/20 text-red-500 p-4">
+                            <span className="text-xs font-bold uppercase tracking-wider">Failed</span>
+                        </div>
+                    )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                 </div>
             </Link>
@@ -58,11 +82,18 @@ export default function VideoCard({ video, className }: VideoCardProps) {
                         <Link href={`/channel/${channelHandle}`} className="hover:text-foreground transition-colors font-medium">
                             {channelName}
                         </Link>
-                        <div className="flex items-center">
-                            <span>{views} views</span>
-                            <span className="mx-1">•</span>
-                            <span>{postedAt}</span>
-                        </div>
+                        {isProcessing ? (
+                            <div className="text-primary font-medium flex items-center gap-1.5 mt-0.5">
+                                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                                Transcoding video...
+                            </div>
+                        ) : (
+                            <div className="flex items-center">
+                                <span>{views} views</span>
+                                <span className="mx-1">•</span>
+                                <span>{postedAt}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 

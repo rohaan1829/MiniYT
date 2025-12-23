@@ -26,7 +26,7 @@ export interface VideoData {
 }
 
 export const videoApi = {
-    getVideos: async (params?: { category?: string; limit?: number; offset?: number }) => {
+    getVideos: async (params?: { category?: string; userId?: string; channelId?: string; limit?: number; offset?: number }) => {
         const response = await apiClient.get('/videos', { params });
         return response.data;
     },
