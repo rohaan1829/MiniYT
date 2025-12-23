@@ -15,6 +15,8 @@ import { videoApi } from '@/lib/api/videos';
 import Link from 'next/link';
 import PostsFeed from '@/components/posts/PostsFeed';
 import VideoUploadDialog from '@/components/video/VideoUploadDialog';
+import VideoCard from '@/components/video/VideoCard';
+import { VideoData } from '@/lib/api/videos';
 
 interface ChannelData {
     id: string;
@@ -40,6 +42,8 @@ export default function ChannelPage() {
     const [error, setError] = useState<string | null>(null);
     const [isSubscribing, setIsSubscribing] = useState(false);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [videos, setVideos] = useState<VideoData[]>([]);
+    const [isLoadingVideos, setIsLoadingVideos] = useState(true);
 
     const isOwner = user && channel && user.id === channel.ownerId;
 
@@ -102,9 +106,29 @@ export default function ChannelPage() {
         }
     };
 
+    const fetchVideos = async () => {
+        if (!channel?.id) return;
+
+        setIsLoadingVideos(true);
+        try {
+            const response = await videoApi.getVideos({ channelId: channel.id });
+            setVideos(response.data);
+        } catch (err) {
+            console.error('Failed to fetch videos:', err);
+        } finally {
+            setIsLoadingVideos(false);
+        }
+    };
+
     useEffect(() => {
         fetchChannelData();
     }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (channel?.id) {
+            fetchVideos();
+        }
+    }, [channel?.id]);
 
     if (loading) {
         return (
@@ -205,8 +229,6 @@ export default function ChannelPage() {
                                     className={`flex-1 md:flex-none rounded-full px-8 font-bold h-10 text-base transition-all ${channel.isSubscribed
                                         ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                                         : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
-                                            ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                                            : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
                                         }`}
                                     onClick={handleSubscribe}
                                     disabled={isSubscribing}
@@ -283,10 +305,6 @@ export default function ChannelPage() {
                 )}
             </PageContainer>
 
-            <UploadDialog
-                isOpen={isUploadOpen}
-                onClose={() => setIsUploadOpen(false)}
-            />
         </div>
     );
 }

@@ -65,14 +65,13 @@ router.post('/upload', authenticate, upload.fields([
         const data = createVideoSchema.parse(req.body);
 
         // Upload to S3 using storageProvider. Keep local file for background processing.
-        const videoKey = await storageProvider.uploadFile(videoFile, {
+        await storageProvider.uploadFile(videoFile, {
             folder: 'videos',
             keepLocalFile: true
         });
-        let thumbnailKey: string | undefined;
 
         if (thumbnailFile) {
-            thumbnailKey = await storageProvider.uploadFile(thumbnailFile, { folder: 'thumbnails' });
+            await storageProvider.uploadFile(thumbnailFile, { folder: 'thumbnails' });
         }
 
         const video = await videoService.createVideo({
