@@ -1,6 +1,21 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const getApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        // If NEXT_PUBLIC_API_URL is set, use it. 
+        // Otherwise, if we're in the browser, try to use the current hostname with port 4000
+        if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+
+        const { protocol, hostname } = window.location;
+        // Default to port 4000 for the backend if no URL is provided
+        return `${protocol}//${hostname}:4000/api`;
+    }
+    // Server-side fallback (for SSR)
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+export const API_ROOT_URL = API_BASE_URL.replace(/\/api$/, '');
 
 export const apiClient = axios.create({
     baseURL: API_BASE_URL,

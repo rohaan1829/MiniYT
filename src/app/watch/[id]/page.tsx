@@ -5,12 +5,13 @@ import RelatedVideos from '@/components/watch/RelatedVideos';
 import FloatingDock from '@/components/layout/FloatingDock';
 import WatchLayout from '@/components/watch/WatchLayout';
 import Sidebar from '@/components/layout/Sidebar';
+import { API_ROOT_URL } from '@/lib/api/client';
 
 type Params = Promise<{ id: string }>;
 
 async function getVideo(id: string) {
     try {
-        const response = await fetch(`http://localhost:4000/api/videos/${id}`, {
+        const response = await fetch(`${API_ROOT_URL}/api/videos/${id}`, {
             cache: 'no-store'
         });
         const json = await response.json();
@@ -23,7 +24,7 @@ async function getVideo(id: string) {
 
 async function getRelatedVideos() {
     try {
-        const response = await fetch(`http://localhost:4000/api/videos?limit=10`, {
+        const response = await fetch(`${API_ROOT_URL}/api/videos?limit=10`, {
             cache: 'no-store'
         });
         const json = await response.json();

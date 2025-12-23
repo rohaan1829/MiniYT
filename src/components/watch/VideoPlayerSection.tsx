@@ -11,6 +11,7 @@ import { useStore } from '@/store/useStore';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatViews, formatTimeAgo } from '@/lib/formatters';
+import { API_ROOT_URL } from '@/lib/api/client';
 
 export default function VideoPlayerSection({ video }: { video: any }) {
     const { cinematicMode, addToHistory, addToLibrary, library, subscribe, unsubscribe, user } = useStore();
@@ -65,7 +66,7 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                     If it's a relative path /uploads/..., we use the backend URL.
                 */}
                 <HLSPlayer
-                    src={video.videoUrl.startsWith('http') ? video.videoUrl : `http://localhost:4000${video.videoUrl}`}
+                    src={video.videoUrl.startsWith('http') ? video.videoUrl : `${API_ROOT_URL}${video.videoUrl}`}
                     className={cn(
                         "w-full",
                         cinematicMode ? "h-[calc(100vh-120px)]" : "h-full"

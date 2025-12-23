@@ -25,6 +25,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import FloatingDock from '@/components/layout/FloatingDock';
 import PageContainer from '@/components/layout/PageContainer';
 import { cn } from '@/lib/utils';
+import { API_ROOT_URL } from '@/lib/api/client';
 
 const profileSchema = z.object({
     name: z.string().min(1, 'Name is required').max(100),
@@ -158,11 +159,8 @@ export default function SettingsPage() {
 
     if (!user) return null;
 
-    const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-    const baseUrl = NEXT_PUBLIC_API_URL.replace('/api', '');
-
     const avatarUrl = user.avatar
-        ? (user.avatar.startsWith('http') ? user.avatar : `${baseUrl}${user.avatar}`)
+        ? (user.avatar.startsWith('http') ? user.avatar : `${API_ROOT_URL}${user.avatar}`)
         : null;
 
     return (

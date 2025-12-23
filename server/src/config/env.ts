@@ -9,7 +9,7 @@ const envSchema = z.object({
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
     REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
     JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-    FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+    FRONTEND_URL: z.string().default('http://localhost:3000'),
     AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
     AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required'),
     AWS_REGION: z.string().min(1, 'AWS_REGION is required'),
@@ -40,7 +40,7 @@ export const config = {
     databaseUrl: env.DATABASE_URL,
     redisUrl: env.REDIS_URL,
     jwtSecret: env.JWT_SECRET,
-    frontendUrl: env.FRONTEND_URL,
+    frontendUrl: env.FRONTEND_URL.split(',').map(url => url.trim()),
     aws: {
         accessKeyId: env.AWS_ACCESS_KEY_ID,
         secretAccessKey: env.AWS_SECRET_ACCESS_KEY,

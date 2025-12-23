@@ -33,7 +33,17 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded by frontend
 }));
 app.use(cors({
-    origin: config.frontendUrl,
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+
+        if (config.frontendUrl.indexOf(origin) !== -1 || config.frontendUrl.includes('*')) {
+            callback(null, true);
+        } else {
+            logger.warn(`CORS rejected for origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 }));
 app.use(express.json({ limit: '100mb' }));
@@ -121,7 +131,7 @@ const startServer = async () => {
         app.listen(config.port, () => {
             logger.info(`🚀 Server running on port ${config.port}`);
             logger.info(`📝 Environment: ${config.nodeEnv}`);
-            logger.info(`🌐 Frontend URL: ${config.frontendUrl}`);
+            logger.info(`🌐 Allowed Frontend URLs: ${config.frontendUrl.join(', ')}`);
 
             // Start workers
             startTrendingWorker();
