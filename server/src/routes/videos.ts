@@ -66,22 +66,30 @@ router.post('/upload', authenticate, upload.fields([
         const data = createVideoSchema.parse(req.body);
 
         // Upload to S3 using storageProvider. Keep local file for background processing.
-        await storageProvider.uploadFile(videoFile, {
+        const videoKey = await storageProvider.uploadFile(videoFile, {
             folder: 'videos',
+            filename: videoFile.filename,
             keepLocalFile: true
         });
 
+        let thumbnailUrl = undefined;
         if (thumbnailFile) {
-            await storageProvider.uploadFile(thumbnailFile, { folder: 'thumbnails' });
+            const thumbKey = await storageProvider.uploadFile(thumbnailFile, {
+                folder: 'thumbnails',
+                filename: thumbnailFile.filename
+            });
+            thumbnailUrl = storageProvider.getPublicUrl(thumbKey);
         }
+
+        const videoUrl = storageProvider.getPublicUrl(videoKey);
 
         const video = await videoService.createVideo({
             userId: (req as any).user.id,
             title: data.title,
             description: data.description,
             category: data.category,
-            videoUrl: `/uploads/videos/${videoFile.filename}`,
-            thumbnailUrl: thumbnailFile ? `/uploads/videos/${thumbnailFile.filename}` : undefined,
+            videoUrl: videoUrl,
+            thumbnailUrl: thumbnailUrl,
             duration: 0,
         });
 
@@ -92,14 +100,14 @@ router.post('/upload', authenticate, upload.fields([
             );
         });
 
-        // Update video status to 'processing' (it's 'ready' by default currently)
-        await videoService.updateVideo(video.id, req.user!.id, { status: 'processing' });
+        // Update video status to 'processing'
+        await videoService.updateVideo(video.id, (req as any).user.id, { status: 'processing' });
 
         // Add to processing queue with absolute path
         await videoQueue.add(VIDEO_JOBS.PROCESS_VIDEO, {
             videoId: video.id,
-            userId: req.user!.id,
-            videoUrl: video.videoUrl,
+            userId: (req as any).user.id,
+            videoUrl: videoUrl,
             tempPath: videoFile.path
         });
 

@@ -1,8 +1,8 @@
-import ffmpeg from 'fluent-ffmpeg';
-import path from 'path';
-import fs from 'fs';
 import prisma from '../config/database';
 import { logger } from '../utils/logger';
+import { transcodeService } from './transcode.service';
+import path from 'path';
+import fs from 'fs';
 
 export class VideoProcessorService {
     async processVideo(videoId: string) {
@@ -13,70 +13,61 @@ export class VideoProcessorService {
             return;
         }
 
-        const inputPath = path.join(__dirname, '../../', video.videoUrl);
+        // Extract filename from S3 URL or local path
+        const filename = path.basename(video.videoUrl);
+        const inputPath = path.join(__dirname, '../../uploads/videos', filename);
 
-        // Verify file exists
+        // Verify file exists locally
         if (!fs.existsSync(inputPath)) {
-            logger.error(`Source file not found: ${inputPath}`);
+            logger.error(`Source file not found for processing: ${inputPath}`);
             await prisma.video.update({
                 where: { id: videoId },
                 data: {
                     status: 'failed',
-                    processingError: 'Source file not found'
+                    processingError: 'Local source file not found for transcoding'
                 }
             });
             return;
         }
 
-        await prisma.video.update({
-            where: { id: videoId },
-            data: { status: 'processing', processingProgress: 0 }
-        });
+        try {
+            await prisma.video.update({
+                where: { id: videoId },
+                data: { status: 'processing', processingProgress: 10 }
+            });
 
-        return new Promise((resolve, reject) => {
-            ffmpeg(inputPath)
-                .on('progress', async (progress) => {
-                    const percent = Math.round(progress.percent || 0);
-                    // Update DB with progress (throttled to avoid DB overload)
-                    if (percent % 10 === 0) {
-                        try {
-                            await prisma.video.update({
-                                where: { id: videoId },
-                                data: { processingProgress: percent }
-                            });
-                        } catch (err) {
-                            logger.error('Error updating processing progress:', err);
-                        }
-                    }
-                })
-                .on('end', async () => {
-                    logger.info(`Video ${videoId} processing complete`);
-                    await prisma.video.update({
-                        where: { id: videoId },
-                        data: {
-                            status: 'ready',
-                            processingProgress: 100,
-                            publishedAt: new Date()
-                        }
-                    });
-                    resolve(true);
-                })
-                .on('error', async (err) => {
-                    logger.error(`Error processing video ${videoId}:`, err);
-                    await prisma.video.update({
-                        where: { id: videoId },
-                        data: {
-                            status: 'failed',
-                            processingError: err.message
-                        }
-                    });
-                    reject(err);
-                })
-                .save(path.join(path.dirname(inputPath), `processed_${path.basename(inputPath)}`));
-            // In a real app, we'd transcode to multiple resolutions (720p, 1080p, etc)
-            // and potentially move the file or generate an HLS stream.
-            // For now, we'll just simulate processing/validating.
-        });
+            logger.info(`Starting transcoding for video ${videoId}`);
+            const results = await transcodeService.processVideo(inputPath, videoId);
+
+            await prisma.video.update({
+                where: { id: videoId },
+                data: {
+                    status: 'ready',
+                    videoUrl: results.videoUrl, // Updated to HLS URL (S3)
+                    thumbnailUrl: results.thumbnailUrl, // Updated to Transcoded Thumbnail (S3)
+                    processingProgress: 100,
+                    publishedAt: new Date()
+                }
+            });
+
+            logger.info(`Video ${videoId} processing complete and updated in DB`);
+
+            // Optionally clean up the local raw file after successful processing
+            if (fs.existsSync(inputPath)) {
+                fs.unlinkSync(inputPath);
+                logger.debug(`Cleaned up local raw file: ${inputPath}`);
+            }
+
+        } catch (error: any) {
+            logger.error(`Error processing video ${videoId}:`, error);
+            await prisma.video.update({
+                where: { id: videoId },
+                data: {
+                    status: 'failed',
+                    processingError: error.message
+                }
+            });
+        }
     }
 }
 
