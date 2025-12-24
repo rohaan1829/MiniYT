@@ -8,6 +8,7 @@ export interface CreateVideoData {
     videoUrl?: string;
     duration?: number;
     status?: string;
+    category?: string;
 }
 
 export interface UpdateVideoData {
@@ -16,6 +17,7 @@ export interface UpdateVideoData {
     thumbnailUrl?: string;
     videoUrl?: string;
     status?: string;
+    category?: string;
 }
 
 export class VideoService {
@@ -36,12 +38,16 @@ export class VideoService {
     }
 
     async getVideos(params: { category?: string; userId?: string; channelId?: string; limit?: number; offset?: number; includeProcessing?: boolean } = {}) {
-        const { limit = 20, offset = 0, userId, channelId, includeProcessing = false } = params;
+        const { limit = 20, offset = 0, userId, channelId, category, includeProcessing = false } = params;
 
         const where: any = {};
 
         if (userId) {
             where.userId = userId;
+        }
+
+        if (category && category !== 'all') {
+            where.category = category;
         }
 
         if (channelId) {

@@ -12,6 +12,7 @@ const router = Router();
 const createVideoSchema = z.object({
     title: z.string().min(1).max(100),
     description: z.string().max(5000).optional(),
+    category: z.string().optional(),
 });
 
 // GET /api/videos - Get feed
@@ -78,6 +79,7 @@ router.post('/upload', authenticate, upload.fields([
             userId: (req as any).user.id,
             title: data.title,
             description: data.description,
+            category: data.category,
             videoUrl: `/uploads/videos/${videoFile.filename}`,
             thumbnailUrl: thumbnailFile ? `/uploads/videos/${thumbnailFile.filename}` : undefined,
             duration: 0,

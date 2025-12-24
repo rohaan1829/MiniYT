@@ -21,7 +21,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { searchApi } from '@/lib/api/search';
 import { cn } from '@/lib/utils';
 import { History, TrendingUp } from 'lucide-react';
-import UploadDialog from '@/components/video/UploadDialog';
+import VideoUploadDialog from '@/components/video/VideoUploadDialog';
 
 export default function Header() {
     const { toggleSidebar, toggleDock, user, logout } = useStore();
@@ -290,7 +290,7 @@ export default function Header() {
                 )}
             </div>
 
-            <UploadDialog
+            <VideoUploadDialog
                 isOpen={isUploadOpen}
                 onClose={() => setIsUploadOpen(false)}
             />
