@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/env';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { Upload, Progress } from '@aws-sdk/lib-storage';
 
 export interface StorageOptions {
     folder?: string;
@@ -39,17 +40,35 @@ class S3StorageProvider implements IStorageProvider {
         const fileName = options?.filename || `${uuidv4()}${ext}`;
         const key = `${folder}/${fileName}`;
 
-        console.log(`[StorageService] Reading file for upload: ${file.path}`);
-        const fileContent = await fs.promises.readFile(file.path);
+        console.log(`[StorageService] Starting streaming upload: ${file.path} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
-        const command = new PutObjectCommand({
-            Bucket: this.bucketName,
-            Key: key,
-            Body: fileContent,
-            ContentType: options?.contentType || file.mimetype,
+        // Use streaming upload for better performance with large files
+        const fileStream = fs.createReadStream(file.path);
+
+        const upload = new Upload({
+            client: this.s3Client,
+            params: {
+                Bucket: this.bucketName,
+                Key: key,
+                Body: fileStream,
+                ContentType: options?.contentType || file.mimetype,
+            },
+            // Multipart upload settings for large files
+            queueSize: 4, // concurrent parts
+            partSize: 10 * 1024 * 1024, // 10MB per part (minimum is 5MB)
+            leavePartsOnError: false,
         });
 
-        await this.s3Client.send(command);
+        // Progress tracking
+        upload.on('httpUploadProgress', (progress: Progress) => {
+            if (progress.loaded && progress.total) {
+                const percent = Math.round((progress.loaded / progress.total) * 100);
+                console.log(`[StorageService] Upload progress: ${percent}% (${(progress.loaded / 1024 / 1024).toFixed(2)}/${(progress.total / 1024 / 1024).toFixed(2)} MB)`);
+            }
+        });
+
+        await upload.done();
+        console.log(`[StorageService] Upload complete: ${key}`);
 
         // Clean up local temp file unless requested otherwise
         if (!options?.keepLocalFile && fs.existsSync(file.path)) {
@@ -68,17 +87,33 @@ class S3StorageProvider implements IStorageProvider {
         const fileName = options?.filename || `${uuidv4()}${ext}`;
         const key = `${folder}/${fileName}`;
 
-        console.log(`[StorageService] Reading file from path: ${filePath}`);
-        const fileContent = await fs.promises.readFile(filePath);
+        const stats = await fs.promises.stat(filePath);
+        console.log(`[StorageService] Starting streaming upload from path: ${filePath} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
 
-        const command = new PutObjectCommand({
-            Bucket: this.bucketName,
-            Key: key,
-            Body: fileContent,
-            ContentType: options?.contentType || 'application/octet-stream',
+        const fileStream = fs.createReadStream(filePath);
+
+        const upload = new Upload({
+            client: this.s3Client,
+            params: {
+                Bucket: this.bucketName,
+                Key: key,
+                Body: fileStream,
+                ContentType: options?.contentType || 'application/octet-stream',
+            },
+            queueSize: 4,
+            partSize: 10 * 1024 * 1024,
+            leavePartsOnError: false,
         });
 
-        await this.s3Client.send(command);
+        upload.on('httpUploadProgress', (progress: Progress) => {
+            if (progress.loaded && progress.total) {
+                const percent = Math.round((progress.loaded / progress.total) * 100);
+                console.log(`[StorageService] Upload progress: ${percent}%`);
+            }
+        });
+
+        await upload.done();
+        console.log(`[StorageService] Upload complete: ${key}`);
 
         // Clean up local file unless requested otherwise
         if (!options?.keepLocalFile && fs.existsSync(filePath)) {
@@ -111,3 +146,4 @@ class S3StorageProvider implements IStorageProvider {
 }
 
 export const storageProvider: IStorageProvider = new S3StorageProvider();
+
