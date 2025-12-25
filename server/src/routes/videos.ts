@@ -49,6 +49,30 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
+// POST /api/videos/presigned-url - Get a presigned S3 URL for direct upload
+router.post('/presigned-url', authenticate, async (req, res, next) => {
+    try {
+        const { fileName, contentType, folder } = req.body;
+
+        if (!fileName || !contentType) {
+            return res.status(400).json({ success: false, message: 'fileName and contentType are required' });
+        }
+
+        const data = await storageProvider.getPresignedUploadUrl(fileName, contentType, folder);
+
+        return res.json({
+            success: true,
+            data: {
+                uploadUrl: data.url,
+                key: data.key,
+                publicUrl: storageProvider.getPublicUrl(data.key)
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
 // POST /api/videos/upload - Upload video and thumbnail
 router.post('/upload', authenticate, upload.fields([
     { name: 'video', maxCount: 1 },

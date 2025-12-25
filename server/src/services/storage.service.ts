@@ -2,8 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/env';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Upload, Progress } from '@aws-sdk/lib-storage';
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export interface StorageOptions {
     folder?: string;
@@ -15,6 +16,7 @@ export interface StorageOptions {
 export interface IStorageProvider {
     uploadFile(file: Express.Multer.File, options?: StorageOptions): Promise<string>;
     uploadFileFromPath(filePath: string, options?: StorageOptions): Promise<string>;
+    getPresignedUploadUrl(fileName: string, contentType: string, folder: string): Promise<{ url: string, key: string }>;
     deleteFile(fileUrl: string): Promise<void>;
     getPublicUrl(filePath: string): string;
 }
@@ -122,6 +124,23 @@ class S3StorageProvider implements IStorageProvider {
         }
 
         return key;
+    }
+
+    async getPresignedUploadUrl(fileName: string, contentType: string, folder: string = 'videos'): Promise<{ url: string, key: string }> {
+        const ext = path.extname(fileName);
+        const uniqueFileName = `${uuidv4()}${ext}`;
+        const key = `${folder}/${uniqueFileName}`;
+
+        const command = new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+            ContentType: contentType,
+        });
+
+        // URL expires in 1 hour
+        const url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+
+        return { url, key };
     }
 
     async deleteFile(fileUrl: string): Promise<void> {
