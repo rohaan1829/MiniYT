@@ -16,7 +16,10 @@ export default function VideoGrid() {
         async function fetchVideos() {
             setIsLoading(true);
             try {
-                const response = await videoApi.getVideos();
+                // Fetch videos with the selected category from the backend
+                const response = await videoApi.getVideos({
+                    category: activeCategory === 'all' ? undefined : activeCategory
+                });
                 setVideos(response.data);
             } catch (error) {
                 console.error('Failed to fetch videos:', error);
@@ -26,13 +29,9 @@ export default function VideoGrid() {
         }
 
         fetchVideos();
-    }, []);
+    }, [activeCategory]);
 
-    // Simple filter logic for mock-like categories
-    // In a real app, this would be a backend query
-    const filteredVideos = activeCategory === 'all'
-        ? videos
-        : videos.filter(v => v.title.toLowerCase().includes(activeCategory.toLowerCase()));
+    const filteredVideos = videos;
 
     return (
         <div className="space-y-6">

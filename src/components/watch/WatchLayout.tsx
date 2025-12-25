@@ -30,8 +30,7 @@ export default function WatchLayout({ children, sidebar }: WatchLayoutProps) {
                 "mx-auto pt-4 transition-[padding] duration-300",
                 cinematicMode
                     ? "max-w-full px-0"
-                    : "max-w-[1800px] px-4 lg:px-6 lg:h-[calc(100vh-6rem)] lg:overflow-hidden",
-                // Sidebar padding logic. When Sidebar is open, push content. When closed (on watch), it's hidden so no extra padding needed besides container.
+                    : "max-w-[1800px] px-4 lg:px-6",
                 sidebarOpen ? "pl-72" : ""
             )}
         >
@@ -41,14 +40,14 @@ export default function WatchLayout({ children, sidebar }: WatchLayoutProps) {
                     "flex gap-6",
                     cinematicMode
                         ? "flex-col"
-                        : "flex-col lg:flex-row h-full"
+                        : "flex-col lg:flex-row"
                 )}
             >
                 {/* Video Player Section */}
                 <div
                     className={cn(
-                        "min-w-0 pr-2", // Added padding right for scrollbar spacing
-                        cinematicMode ? "w-full" : "flex-1 lg:h-full lg:overflow-y-auto"
+                        "min-w-0 pr-2 pb-8", // Added bottom padding for spacing
+                        cinematicMode ? "w-full" : "flex-1"
                     )}
                 >
                     <div className={cn(
@@ -63,13 +62,13 @@ export default function WatchLayout({ children, sidebar }: WatchLayoutProps) {
                     className={cn(
                         "flex-shrink-0",
                         cinematicMode
-                            ? "w-full max-w-[1400px] mx-auto px-4"
-                            : "lg:w-[400px] xl:w-[450px] lg:h-full lg:overflow-y-auto pl-1" // Added scrollable sidebar
+                            ? "w-full max-w-[1400px] mx-auto px-4 pb-20"
+                            : "lg:w-[400px] xl:w-[450px] pl-1 pb-20"
                     )}
                 >
                     {/* Header for Up Next section */}
                     <h3 className={cn(
-                        "font-bold text-lg mb-4 sticky top-0 bg-background/95 backdrop-blur z-10 py-2", // made sticky
+                        "font-bold text-lg mb-4 py-2",
                         cinematicMode ? "block" : "hidden lg:block"
                     )}>
                         Up Next
