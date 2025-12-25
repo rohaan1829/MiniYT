@@ -21,6 +21,7 @@ import searchRouter from './routes/search';
 import './workers/video.worker'; // Import worker to start it
 import trendingRouter from './routes/trending.routes';
 import postRouter from './routes/posts.routes';
+import analyticsRouter from './routes/analytics.routes';
 import { startTrendingWorker, stopTrendingWorker } from './workers/trending.worker';
 import { startVideoWorker, stopVideoWorker } from './workers/video.worker';
 
@@ -66,6 +67,7 @@ app.use('/api/videos', videoRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/trending', trendingRouter);
 app.use('/api/posts', postRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // 404 handler
 app.use((_req, res) => {
