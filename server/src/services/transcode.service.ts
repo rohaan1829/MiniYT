@@ -41,14 +41,25 @@ export class TranscodeService {
 
             ffmpeg(videoPath)
                 .outputOptions([
-                    '-profile:v baseline',
+                    '-profile:v baseline',      // Max compatibility
                     '-level 3.0',
                     '-start_number 0',
-                    '-hls_time 10',
-                    '-hls_list_size 0',
+                    '-hls_time 4',              // 4 sec segments (better for seeking)
+                    '-hls_list_size 0',         // Keep all segments in playlist
+                    '-hls_segment_type mpegts',
+                    '-g 48',                    // Keyframe every 48 frames (2 sec at 24fps)
+                    '-keyint_min 48',
+                    '-sc_threshold 0',          // Disable scene change detection to force fixed GOP
+                    '-bf 0',                    // No B-frames for faster seeking
+                    '-movflags +faststart',     // Move metadata to start of file
                     '-f hls'
                 ])
                 .output(path.join(hlsFolder, 'index.m3u8'))
+                .on('progress', (progress) => {
+                    if (progress.percent) {
+                        console.log(`[TranscodeService] Transcoding: ${Math.round(progress.percent)}%`);
+                    }
+                })
                 .on('end', () => {
                     console.log(`[TranscodeService] HLS generation complete`);
                     resolve(hlsFolder);

@@ -414,7 +414,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
             return (
                 <div className="flex flex-col py-1">
                     <button
-                        onClick={() => setSettingsView('speed')}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSettingsView('speed');
+                        }}
                         className="w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 flex items-center justify-between text-white transition-colors"
                     >
                         <div className="flex items-center gap-2">
@@ -428,7 +431,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                     </button>
                     {/* Ambient Mode Toggle */}
                     <button
-                        onClick={() => setAmbientMode(!ambientMode)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setAmbientMode(!ambientMode);
+                        }}
                         className="w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 flex items-center justify-between text-white transition-colors"
                     >
                         <div className="flex items-center gap-2">
@@ -447,7 +453,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                         </div>
                     </button>
                     <button
-                        onClick={() => setSettingsView('quality')}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSettingsView('quality');
+                        }}
                         className="w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 flex items-center justify-between text-white transition-colors"
                     >
                         <div className="flex items-center gap-2">
@@ -467,7 +476,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
             return (
                 <>
                     <button
-                        onClick={() => setSettingsView('main')}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSettingsView('main');
+                        }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-white/10 text-white border-b border-white/10 flex items-center gap-2 sticky top-0 bg-black/95 backdrop-blur z-10"
                     >
                         <span className="text-base leading-none">‹</span>
@@ -477,7 +489,8 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                         {PLAYBACK_SPEEDS.map((speed) => (
                             <button
                                 key={speed}
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     changeSpeed(speed);
                                 }}
                                 className={cn(
@@ -498,7 +511,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
             return (
                 <>
                     <button
-                        onClick={() => setSettingsView('main')}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSettingsView('main');
+                        }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-white/10 text-white border-b border-white/10 flex items-center gap-2 sticky top-0 bg-black/95 backdrop-blur z-10"
                     >
                         <span className="text-base leading-none">‹</span>
@@ -506,7 +522,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                     </button>
                     <div className="max-h-60 overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/20">
                         <button
-                            onClick={() => changeQuality(-1)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                changeQuality(-1);
+                            }}
                             className={cn(
                                 "w-full px-4 py-2 text-left text-sm hover:bg-white/10 flex items-center justify-between transition-colors",
                                 currentQuality === -1 ? "text-primary font-medium" : "text-white"
@@ -518,7 +537,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                         {qualityLevels.map((q) => (
                             <button
                                 key={q.level}
-                                onClick={() => changeQuality(q.level)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    changeQuality(q.level);
+                                }}
                                 className={cn(
                                     "w-full px-4 py-2 text-left text-sm hover:bg-white/10 flex items-center justify-between transition-colors",
                                     currentQuality === q.level ? "text-primary font-medium" : "text-white"
@@ -594,12 +616,18 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                 )}
 
                 {/* Controls Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                <div
+                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                >
                     {/* Progress Bar */}
                     <div
                         ref={progressRef}
                         className="relative h-1 mx-4 mb-2 cursor-pointer group/progress hover:h-1.5 transition-all"
-                        onClick={handleProgressClick}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleProgressClick(e as any);
+                        }}
                         onMouseMove={handleProgressHover}
                         onMouseLeave={handleProgressLeave}
                     >
@@ -650,11 +678,23 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
 
                     {/* Control Buttons */}
                     <div className="flex items-center gap-3 px-4 pb-3">
-                        <button onClick={togglePlay} className="text-white hover:text-primary transition-transform hover:scale-110">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                togglePlay();
+                            }}
+                            className="text-white hover:text-primary transition-transform hover:scale-110"
+                        >
                             {isPlaying ? <Pause size={24} /> : <Play size={24} />}
                         </button>
 
-                        <button onClick={toggleMute} className="text-white hover:text-primary transition-transform hover:scale-110">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleMute();
+                            }}
+                            className="text-white hover:text-primary transition-transform hover:scale-110"
+                        >
                             {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
                         </button>
 
@@ -668,7 +708,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                         {/* Autoplay Toggle */}
                         <div className="flex items-center gap-2 group/autoplay relative">
                             <button
-                                onClick={() => setAutoPlayNext(!autoPlayNext)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAutoPlayNext(!autoPlayNext);
+                                }}
                                 className="flex items-center gap-1.5 px-2 py-1 rounded-full hover:bg-white/10 transition-colors"
                             >
                                 <div className={cn(
@@ -690,7 +733,8 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                         {/* Settings Control */}
                         <div className="relative">
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setShowSettings(!showSettings);
                                     setSettingsView('main');
                                 }}
@@ -712,7 +756,10 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
 
                         {/* Cinematic Mode Toggle */}
                         <button
-                            onClick={toggleCinematicMode}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCinematicMode();
+                            }}
                             className={cn(
                                 "text-white hover:text-primary transition-transform hover:scale-110",
                                 cinematicMode && "text-primary"
@@ -722,7 +769,13 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
                             <RectangleHorizontal size={22} />
                         </button>
 
-                        <button onClick={toggleFullscreen} className="text-white hover:text-primary transition-transform hover:scale-110">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFullscreen();
+                            }}
+                            className="text-white hover:text-primary transition-transform hover:scale-110"
+                        >
                             {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
                         </button>
                     </div>
