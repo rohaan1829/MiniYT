@@ -72,15 +72,34 @@ export class TranscodeService {
         });
     }
 
+    async getVideoMetadata(videoPath: string): Promise<{ duration: number; width: number; height: number }> {
+        return new Promise((resolve, reject) => {
+            ffmpeg.ffprobe(videoPath, (err, metadata) => {
+                if (err) return reject(err);
+                const duration = metadata.format.duration || 0;
+                const videoStream = metadata.streams.find(s => s.codec_type === 'video');
+                resolve({
+                    duration: Math.round(duration),
+                    width: videoStream?.width || 0,
+                    height: videoStream?.height || 0
+                });
+            });
+        });
+    }
+
     async processVideo(
         tempVideoPath: string,
-        videoId: string
-    ): Promise<{ videoUrl: string; thumbnailUrl: string }> {
-        console.log(`[TranscodeService] Processing video: ${videoId}, path: ${tempVideoPath}`);
+        videoId: string,
+        options: { extractThumbnail?: boolean } = { extractThumbnail: true }
+    ): Promise<{ videoUrl: string; thumbnailUrl?: string; duration: number }> {
+        console.log(`[TranscodeService] Processing video: ${videoId}, path: ${tempVideoPath}, extractThumbnail: ${options.extractThumbnail}`);
 
         if (!fs.existsSync(tempVideoPath)) {
             throw new Error(`Input video file not found at path: ${tempVideoPath}`);
         }
+
+        const metadata = await this.getVideoMetadata(tempVideoPath);
+        console.log(`[TranscodeService] Metadata for ${videoId}:`, metadata);
 
         const outputBase = path.dirname(tempVideoPath);
         const videoFolder = path.basename(tempVideoPath, path.extname(tempVideoPath)) + '_processing';
@@ -91,22 +110,30 @@ export class TranscodeService {
             fs.mkdirSync(processDir, { recursive: true });
         }
 
-        logger.info(`Extracting thumbnail for video: ${videoId}`);
-        const localThumbPath = await this.extractThumbnail(tempVideoPath, processDir);
+        let thumbnailUrl = '';
+
+        if (options.extractThumbnail) {
+            try {
+                logger.info(`Extracting thumbnail for video: ${videoId}`);
+                const localThumbPath = await this.extractThumbnail(tempVideoPath, processDir);
+
+                // Upload Thumbnail to S3
+                const thumbKey = await storageProvider.uploadFileFromPath(localThumbPath, {
+                    folder: 'thumbnails',
+                    contentType: 'image/png'
+                });
+                thumbnailUrl = storageProvider.getPublicUrl(thumbKey);
+                console.log(`[TranscodeService] Thumbnail uploaded to S3: ${thumbnailUrl}`);
+            } catch (err) {
+                logger.error(`Thumbnail extraction failed for video ${videoId}, continuing without it:`, err);
+            }
+        }
 
         logger.info(`Generating HLS for video: ${videoId}`);
         const localHlsFolder = await this.generateHLS(tempVideoPath, processDir);
 
-        // Upload results to S3
-        logger.info(`Uploading processing results to S3 for video: ${videoId}`);
-
-        // 1. Upload Thumbnail
-        const thumbKey = await storageProvider.uploadFileFromPath(localThumbPath, {
-            folder: 'thumbnails',
-            contentType: 'image/png'
-        });
-
-        // 2. Upload HLS segments and playlist
+        // Upload HLS results to S3
+        logger.info(`Uploading HLS segments to S3 for video: ${videoId}`);
         const hlsFiles = await fs.promises.readdir(localHlsFolder);
         let playlistKey = '';
 
@@ -126,7 +153,8 @@ export class TranscodeService {
 
         return {
             videoUrl: storageProvider.getPublicUrl(playlistKey),
-            thumbnailUrl: storageProvider.getPublicUrl(thumbKey)
+            thumbnailUrl: thumbnailUrl || undefined,
+            duration: metadata.duration
         };
     }
 }

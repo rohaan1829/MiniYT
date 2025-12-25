@@ -37,20 +37,32 @@ export class VideoProcessorService {
             });
 
             logger.info(`Starting transcoding for video ${videoId}`);
-            const results = await transcodeService.processVideo(inputPath, videoId);
+
+            // Check if we already have a thumbnail (user-uploaded)
+            const hasCustomThumbnail = !!video.thumbnailUrl;
+            const results = await transcodeService.processVideo(inputPath, videoId, {
+                extractThumbnail: !hasCustomThumbnail
+            });
+
+            const updateData: any = {
+                status: 'ready',
+                videoUrl: results.videoUrl, // Updated to HLS URL (S3)
+                duration: results.duration,
+                processingProgress: 100,
+                publishedAt: new Date()
+            };
+
+            // Only update thumbnail if we don't have a custom one
+            if (!hasCustomThumbnail && results.thumbnailUrl) {
+                updateData.thumbnailUrl = results.thumbnailUrl;
+            }
 
             await prisma.video.update({
                 where: { id: videoId },
-                data: {
-                    status: 'ready',
-                    videoUrl: results.videoUrl, // Updated to HLS URL (S3)
-                    thumbnailUrl: results.thumbnailUrl, // Updated to Transcoded Thumbnail (S3)
-                    processingProgress: 100,
-                    publishedAt: new Date()
-                }
+                data: updateData
             });
 
-            logger.info(`Video ${videoId} processing complete and updated in DB`);
+            logger.info(`Video ${videoId} processing complete and updated in DB. Duration: ${results.duration}s. Thumbnail maintained: ${hasCustomThumbnail}`);
 
             // Optionally clean up the local raw file after successful processing
             if (fs.existsSync(inputPath)) {
