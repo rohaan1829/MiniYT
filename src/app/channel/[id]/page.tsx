@@ -16,6 +16,7 @@ import Link from 'next/link';
 import PostsFeed from '@/components/posts/PostsFeed';
 import VideoUploadDialog from '@/components/video/VideoUploadDialog';
 import VideoCard from '@/components/video/VideoCard';
+import ChannelHome from '@/components/channel/ChannelHome';
 import { VideoData } from '@/lib/api/videos';
 
 interface ChannelData {
@@ -251,7 +252,7 @@ export default function ChannelPage() {
 
                 {/* Tabs & Content */}
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
-                    <Tabs defaultValue="videos" className="w-full">
+                    <Tabs defaultValue="home" className="w-full">
                         <TabsList className="bg-transparent border-b border-white/10 w-full justify-start h-auto p-0 rounded-none mb-8">
                             {['Home', 'Videos', 'Posts', 'Shorts', 'Live', 'Playlists'].map((tab) => (
                                 <TabsTrigger
@@ -286,9 +287,11 @@ export default function ChannelPage() {
                             )}
                         </TabsContent>
                         <TabsContent value="home" className="mt-0">
-                            <div className="py-10 text-center text-muted-foreground">
-                                Customize your channel home layout coming soon...
-                            </div>
+                            <ChannelHome
+                                videos={videos}
+                                channel={channel}
+                                isOwner={isOwner || false}
+                            />
                         </TabsContent>
                         <TabsContent value="posts" className="mt-0">
                             <PostsFeed channelId={channel.id} isOwner={isOwner || false} />
