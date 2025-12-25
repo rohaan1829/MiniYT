@@ -22,6 +22,9 @@ import './workers/video.worker'; // Import worker to start it
 import trendingRouter from './routes/trending.routes';
 import postRouter from './routes/posts.routes';
 import analyticsRouter from './routes/analytics.routes';
+import likesRouter from './routes/likes.routes';
+import commentsRouter from './routes/comments.routes';
+import inboxRouter from './routes/inbox.routes';
 import { startTrendingWorker, stopTrendingWorker } from './workers/trending.worker';
 import { startVideoWorker, stopVideoWorker } from './workers/video.worker';
 
@@ -68,6 +71,9 @@ app.use('/api/search', searchRouter);
 app.use('/api/trending', trendingRouter);
 app.use('/api/posts', postRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/videos', likesRouter);    // /api/videos/:id/like
+app.use('/api/videos', commentsRouter); // /api/videos/:id/comments
+app.use('/api/inbox', inboxRouter);     // /api/inbox
 
 // 404 handler
 app.use((_req, res) => {

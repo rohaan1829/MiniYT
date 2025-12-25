@@ -34,6 +34,7 @@ model User {
   posts         Post[]
   postComments  PostComment[]
   postLikes     PostLike[]
+  videoLikes    VideoLike[]
 
   @@map("users")
 }
@@ -90,6 +91,8 @@ model Video {
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   watchHistory       WatchHistory[]
   viewSnapshots      ViewSnapshot[]
+  likes              VideoLike[]
+  likeCount          Int             @default(0)
 
   @@index([trendingScore, category])
   @@index([publishedAt])
@@ -102,6 +105,7 @@ model Comment {
   userId    String
   content   String
   likes     Int      @default(0)
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -263,4 +267,18 @@ model ViewSnapshot {
 
   @@index([videoId, timestamp])
   @@map("view_snapshots")
+}
+
+model VideoLike {
+  id        String   @id @default(cuid())
+  videoId   String
+  userId    String
+  createdAt DateTime @default(now())
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, userId])
+  @@index([videoId])
+  @@index([userId])
+  @@map("video_likes")
 }
