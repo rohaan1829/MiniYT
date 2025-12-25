@@ -40,8 +40,10 @@ router.get('/:id', async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Video not found' });
         }
 
-        // Background increment views
-        videoService.incrementViews(req.params.id).catch(err => logger.error('View increment error:', err));
+        // Background increment views - ONLY if the video is ready/published
+        if (video.status === 'ready') {
+            videoService.incrementViews(req.params.id).catch(err => logger.error('View increment error:', err));
+        }
 
         return res.json({ success: true, data: video });
     } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Search, Bell, LogOut, User as UserIcon, Settings, Tv, ChevronDown, Video } from 'lucide-react';
+import { Menu, Search, Bell, LogOut, User as UserIcon, Settings, Tv, ChevronDown, Video, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/store/useStore';
@@ -24,13 +24,12 @@ import { History, TrendingUp } from 'lucide-react';
 import VideoUploadDialog from '@/components/video/VideoUploadDialog';
 
 export default function Header() {
-    const { toggleSidebar, toggleDock, user, logout } = useStore();
+    const { toggleSidebar, toggleDock, user, logout, isUploading, uploadDialogOpen, setUploadDialogOpen } = useStore();
     const [mounted, setMounted] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [isUploadOpen, setIsUploadOpen] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
     const router = useRouter();
@@ -184,10 +183,14 @@ export default function Header() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setIsUploadOpen(true)}
-                        className="rounded-full hover:bg-secondary w-10 h-10"
+                        onClick={() => !isUploading && setUploadDialogOpen(true)}
+                        className={cn(
+                            "rounded-full w-10 h-10 transition-colors",
+                            isUploading ? "text-primary cursor-not-allowed opacity-50" : "hover:bg-secondary"
+                        )}
+                        title={isUploading ? "Upload in progress..." : "Create"}
                     >
-                        <Video className="w-5 h-5" />
+                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Video className="w-5 h-5" />}
                     </Button>
                 )}
 
@@ -291,8 +294,8 @@ export default function Header() {
             </div>
 
             <VideoUploadDialog
-                isOpen={isUploadOpen}
-                onClose={() => setIsUploadOpen(false)}
+                isOpen={uploadDialogOpen}
+                onClose={() => setUploadDialogOpen(false)}
             />
         </header>
     );

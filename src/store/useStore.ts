@@ -44,6 +44,8 @@ interface AppState {
     cinematicMode: boolean;
     history: Video[];
     library: Video[];
+    isUploading: boolean;
+    uploadDialogOpen: boolean;
 
     // Auth actions
     setAuth: (user: User, token: string, rememberMe?: boolean) => void;
@@ -76,6 +78,8 @@ interface AppState {
     setCinematicMode: (value: boolean) => void;
     addToHistory: (video: Video) => void;
     addToLibrary: (video: Video) => void;
+    setIsUploading: (value: boolean) => void;
+    setUploadDialogOpen: (value: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -96,6 +100,8 @@ export const useStore = create<AppState>()(
             history: [],
             library: [],
             sessions: [],
+            isUploading: false,
+            uploadDialogOpen: false,
 
             // Auth actions
             setAuth: (user, token, rememberMe = false) => {
@@ -394,6 +400,8 @@ export const useStore = create<AppState>()(
                 }
                 return { library: [video, ...state.library] };
             }),
+            setIsUploading: (value: boolean) => set({ isUploading: value }),
+            setUploadDialogOpen: (value: boolean) => set({ uploadDialogOpen: value }),
         }),
         {
             name: 'miniyt-storage',
