@@ -232,7 +232,7 @@ export class CommentsService {
         // Use a transaction to:
         // 1. Mark the original comment as public and read
         // 2. Create the reply as public
-        const [updatedOriginal, reply] = await prisma.$transaction([
+        const [_updatedOriginal, reply] = await prisma.$transaction([
             prisma.comment.update({
                 where: { id: commentId },
                 data: { isPublic: true, isRead: true }
