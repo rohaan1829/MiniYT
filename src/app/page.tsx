@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import VideoGrid from '@/components/video/VideoGrid';
-import HeroSection from '@/components/home/HeroSection';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 
@@ -32,9 +31,6 @@ export default function Home() {
           sidebarOpen ? "md:pl-72" : "md:pl-8"
         )}
       >
-        {/* Brought back the Hero Section */}
-        <HeroSection />
-
         <div>
           {/* Section Title */}
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
