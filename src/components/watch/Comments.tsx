@@ -1,65 +1,100 @@
 'use client';
 
+import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Comment } from '@/data/mockData';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { useStore } from '@/store/useStore';
+import { commentsApi } from '@/lib/api/interactions';
+import { Loader2, Send, ShieldCheck } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-export default function Comments({ comments }: { comments: Comment[] }) {
-    if (!comments) return null;
+export default function Comments({ videoId }: { videoId: string }) {
+    const { user } = useStore();
+    const { toast } = useToast();
+    const [content, setContent] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!user) {
+            toast({
+                title: "Authentication required",
+                description: "You must be signed in to send a message to the creator.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (!content.trim()) return;
+
+        setIsSubmitting(true);
+        try {
+            const response = await commentsApi.sendMessage(videoId, content.trim());
+            if (response.success) {
+                toast({
+                    title: "Message Sent",
+                    description: "Your message has been sent directly to the creator's inbox.",
+                });
+                setContent('');
+            }
+        } catch (error: any) {
+            toast({
+                title: "Failed to send",
+                description: error.response?.data?.message || "Something went wrong while sending your message.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
-        <div className="mt-6">
-            <h3 className="text-xl font-bold mb-6">{comments.length} Comments</h3>
-
-            {/* Add Comment Input */}
-            <div className="flex gap-4 mb-8">
-                <Avatar className="w-10 h-10">
-                    <AvatarFallback>Y</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <Input
-                        placeholder="Add a comment..."
-                        className="bg-transparent border-b border-t-0 border-x-0 rounded-none focus-visible:ring-0 px-0 focus:border-foreground transition-colors"
-                    />
-                    <div className="flex justify-end gap-2 mt-2">
-                        <Button variant="ghost" className="rounded-full">Cancel</Button>
-                        <Button className="rounded-full bg-primary/20 text-primary hover:bg-primary/30" disabled>Comment</Button>
-                    </div>
-                </div>
+        <div className="mt-8 border-t border-border pt-8">
+            <div className="flex items-center gap-2 mb-6 text-primary">
+                <ShieldCheck className="h-5 w-5" />
+                <h3 className="text-xl font-bold">Private Message Creator</h3>
             </div>
 
-            {/* Comment List */}
-            <div className="space-y-6">
-                {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-4">
-                        <Avatar className="w-10 h-10 mt-1">
-                            <AvatarImage src={comment.avatar} />
-                            <AvatarFallback>{comment.user[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-sm">{comment.user}</span>
-                                <span className="text-xs text-muted-foreground">{comment.postedAt}</span>
-                            </div>
-                            <p className="text-sm mb-2">{comment.content}</p>
+            <p className="text-sm text-muted-foreground mb-6 bg-secondary/30 p-4 rounded-xl border border-border/50">
+                Comments on this video are <strong>private messages</strong>. Your message will be sent directly to the creator's studio and will not be visible to the public.
+            </p>
 
-                            <div className="flex items-center gap-4">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
-                                    <ThumbsUp className="w-4 h-4" />
-                                </Button>
-                                <span className="text-xs text-muted-foreground">{comment.likes}</span>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
-                                    <ThumbsDown className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-8 rounded-full text-xs font-semibold hover:bg-muted">
-                                    Reply
-                                </Button>
-                            </div>
-                        </div>
+            <div className="flex gap-4">
+                <Avatar className="w-10 h-10 border border-border">
+                    <AvatarImage src={user?.avatar} />
+                    <AvatarFallback>{(user?.name || user?.username || '?')[0].toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-4">
+                    <div className="relative">
+                        <textarea
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder="Send a private message to the creator..."
+                            className="w-full bg-secondary/50 border border-border rounded-2xl p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none text-sm"
+                            disabled={isSubmitting}
+                        />
                     </div>
-                ))}
+                    <div className="flex justify-end items-center gap-4">
+                        {content.length > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                                {content.length} / 2000
+                            </span>
+                        )}
+                        <Button
+                            className="rounded-full px-8 gap-2 shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                            disabled={isSubmitting || !content.trim()}
+                            onClick={handleSubmit}
+                        >
+                            {isSubmitting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <>
+                                    <Send className="h-4 w-4" />
+                                    Send Message
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -152,7 +152,7 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                 </button>
             </div>
 
-            <Comments comments={video.comments || []} />
+            <Comments videoId={video.id} />
         </div>
     );
 }
