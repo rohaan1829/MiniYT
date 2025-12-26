@@ -6,10 +6,9 @@ import { useStore } from '@/store/useStore';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
-import FloatingDock from '@/components/layout/FloatingDock';
 import PageContainer from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     Inbox,
@@ -20,8 +19,7 @@ import {
     CheckCheck,
     Trash2,
     ArrowLeft,
-    Video,
-    Clock
+    Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatTimeAgo } from '@/lib/formatters';
@@ -48,8 +46,7 @@ export default function InboxPage() {
 
     useEffect(() => {
         useStore.setState({
-            dockVisible: true,
-            sidebarOpen: false
+            sidebarOpen: true
         });
     }, []);
 
@@ -155,248 +152,266 @@ export default function InboxPage() {
                                     <ArrowLeft className="h-6 w-6" />
                                 </Button>
                                 <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Inbox className="h-5 w-5 text-primary" />
-                                        <span className="text-sm font-bold text-primary uppercase tracking-widest">Creator Studio</span>
-                                    </div>
-                                    <h1 className="text-4xl font-black tracking-tight">Inbox</h1>
+                                    <h1 className="text-4xl font-black tracking-tight">Studio Inbox</h1>
                                 </div>
                             </div>
 
-                            {/* Tab Selector */}
-                            <div className="flex bg-card/50 backdrop-blur-md p-1 rounded-2xl border border-border/50">
-                                <button
-                                    onClick={() => setView('messages')}
-                                    className={cn(
-                                        "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all",
-                                        view === 'messages'
-                                            ? "bg-primary text-white shadow-lg shadow-primary/30"
-                                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                                    )}
-                                >
-                                    <MessageCircle className="w-4 h-4" />
-                                    Messages
-                                    {unreadCount > 0 && (
-                                        <span className="ml-1 px-2 py-0.5 bg-pink-500 text-white text-xs font-bold rounded-full">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => setView('likes')}
-                                    className={cn(
-                                        "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all",
-                                        view === 'likes'
-                                            ? "bg-primary text-white shadow-lg shadow-primary/30"
-                                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                                    )}
-                                >
-                                    <Heart className="w-4 h-4" />
-                                    Likes
-                                </button>
+                            {/* Studio Overview Stats */}
+                            <div className="hidden lg:flex items-center gap-6 bg-card/40 backdrop-blur-md border border-border/50 p-4 rounded-2xl">
+                                <div className="text-center px-4 border-r border-border/50">
+                                    <p className="text-[10px] uppercase tracking-tighter text-muted-foreground font-bold">Unread</p>
+                                    <p className="text-xl font-black text-primary">{unreadCount}</p>
+                                </div>
+                                <div className="text-center px-4 border-r border-border/50">
+                                    <p className="text-[10px] uppercase tracking-tighter text-muted-foreground font-bold">Total Msgs</p>
+                                    <p className="text-xl font-black">{messages.length}</p>
+                                </div>
+                                <div className="text-center px-4">
+                                    <p className="text-[10px] uppercase tracking-tighter text-muted-foreground font-bold">Total Likes</p>
+                                    <p className="text-xl font-black text-pink-500">{likes.length}</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Mark All as Read */}
-                        {view === 'messages' && unreadCount > 0 && (
-                            <div className="flex justify-end">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleMarkAllAsRead}
-                                    className="gap-2 text-muted-foreground hover:text-foreground"
-                                >
-                                    <CheckCheck className="w-4 h-4" />
-                                    Mark all as read
-                                </Button>
-                            </div>
-                        )}
+                        {/* Tab Selector */}
+                        <div className="flex bg-card/50 backdrop-blur-md p-1 rounded-2xl border border-border/50">
+                            <button
+                                onClick={() => setView('messages')}
+                                className={cn(
+                                    "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all",
+                                    view === 'messages'
+                                        ? "bg-primary text-white shadow-lg shadow-primary/30"
+                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                )}
+                            >
+                                <MessageCircle className="w-4 h-4" />
+                                Messages
+                                {unreadCount > 0 && (
+                                    <span className="ml-1 px-2 py-0.5 bg-pink-500 text-white text-xs font-bold rounded-full">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setView('likes')}
+                                className={cn(
+                                    "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all",
+                                    view === 'likes'
+                                        ? "bg-primary text-white shadow-lg shadow-primary/30"
+                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                )}
+                            >
+                                <Heart className="w-4 h-4" />
+                                Likes
+                            </button>
+                        </div>
 
-                        {/* Messages Tab */}
-                        {view === 'messages' && (
-                            <div className="space-y-4">
-                                {loadingMessages ? (
-                                    <div className="flex items-center justify-center py-20">
-                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                    </div>
-                                ) : messages.length === 0 ? (
-                                    <Card className="bg-card/40 border-border/50">
-                                        <CardContent className="py-16 text-center">
-                                            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                                            <p className="text-lg font-medium text-muted-foreground">No messages yet</p>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                When viewers send you messages, they'll appear here.
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                ) : (
-                                    messages.map((message) => (
-                                        <Card
-                                            key={message.id}
-                                            className={cn(
-                                                "bg-card/40 border-border/50 transition-all hover:border-primary/30",
-                                                !message.isRead && "border-l-4 border-l-primary bg-primary/5"
-                                            )}
-                                        >
-                                            <CardContent className="p-5">
-                                                <div className="flex gap-4">
-                                                    {/* Video thumbnail */}
-                                                    <Link href={`/watch/${message.video.id}`}>
-                                                        <div className="w-24 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0 relative group">
-                                                            {message.video.thumbnailUrl ? (
-                                                                <img
-                                                                    src={message.video.thumbnailUrl}
-                                                                    alt={message.video.title}
-                                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <Video className="w-6 h-6 text-muted-foreground" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </Link>
+                        {/* Content Area */}
+                        <div className="space-y-6">
+                            {/* Mark All as Read */}
+                            {view === 'messages' && unreadCount > 0 && (
+                                <div className="flex justify-end">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleMarkAllAsRead}
+                                        className="gap-2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <CheckCheck className="w-4 h-4" />
+                                        Mark all as read
+                                    </Button>
+                                </div>
+                            )}
 
-                                                    <div className="flex-1 min-w-0">
-                                                        {/* Header */}
-                                                        <div className="flex items-start justify-between gap-4 mb-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <Avatar className="w-6 h-6">
-                                                                    <AvatarImage src={message.user.image || undefined} />
-                                                                    <AvatarFallback className="text-xs">
-                                                                        {message.user.name?.[0] || message.user.username[0]}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="font-bold text-sm">
-                                                                    {message.user.name || message.user.username}
-                                                                </span>
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    • {formatTimeAgo(message.createdAt)}
-                                                                </span>
-                                                            </div>
-
-                                                            <div className="flex items-center gap-1">
-                                                                {!message.isRead && (
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-8 w-8"
-                                                                        onClick={() => handleMarkAsRead(message.id)}
-                                                                    >
-                                                                        <Check className="w-4 h-4" />
-                                                                    </Button>
-                                                                )}
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                                    onClick={() => handleDelete(message.id)}
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Video title */}
-                                                        <Link href={`/watch/${message.video.id}`}>
-                                                            <p className="text-xs text-muted-foreground mb-1 hover:text-primary transition-colors">
-                                                                On: {message.video.title}
-                                                            </p>
-                                                        </Link>
-
-                                                        {/* Message content */}
-                                                        <p className="text-sm text-foreground/90">{message.content}</p>
-                                                    </div>
+                            {/* Messages Tab */}
+                            {view === 'messages' && (
+                                <div className="space-y-4">
+                                    {loadingMessages ? (
+                                        <div className="flex items-center justify-center py-20">
+                                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        </div>
+                                    ) : messages.length === 0 ? (
+                                        <Card className="bg-card/40 border-dashed border-2 border-border/50">
+                                            <CardContent className="py-20 text-center">
+                                                <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                    <MessageCircle className="w-10 h-10 text-primary/40" />
                                                 </div>
+                                                <h3 className="text-xl font-bold mb-2">No messages yet</h3>
+                                                <p className="text-muted-foreground max-w-sm mx-auto">
+                                                    When viewers send you private messages from your video pages, they'll appear here for you to manage.
+                                                </p>
                                             </CardContent>
                                         </Card>
-                                    ))
-                                )}
-                            </div>
-                        )}
-
-                        {/* Likes Tab */}
-                        {view === 'likes' && (
-                            <div className="space-y-4">
-                                {loadingLikes ? (
-                                    <div className="flex items-center justify-center py-20">
-                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                    </div>
-                                ) : likes.length === 0 ? (
-                                    <Card className="bg-card/40 border-border/50">
-                                        <CardContent className="py-16 text-center">
-                                            <Heart className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                                            <p className="text-lg font-medium text-muted-foreground">No likes yet</p>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                When viewers like your videos, they'll appear here.
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                ) : (
-                                    <div className="grid gap-3">
-                                        {likes.map((like) => (
+                                    ) : (
+                                        messages.map((message) => (
                                             <Card
-                                                key={like.id}
-                                                className="bg-card/40 border-border/50 hover:border-pink-500/30 transition-all group"
+                                                key={message.id}
+                                                className={cn(
+                                                    "bg-card/40 border-border/50 transition-all hover:border-primary/30",
+                                                    !message.isRead && "border-l-4 border-l-primary bg-primary/5"
+                                                )}
                                             >
-                                                <CardContent className="p-4">
-                                                    <div className="flex items-center gap-4">
-                                                        {/* Heart icon */}
-                                                        <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center flex-shrink-0">
-                                                            <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
-                                                        </div>
-
-                                                        {/* User */}
-                                                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                            <Avatar className="w-8 h-8">
-                                                                <AvatarImage src={like.user.image || undefined} />
-                                                                <AvatarFallback className="text-xs">
-                                                                    {like.user.name?.[0] || like.user.username[0]}
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm">
-                                                                    <span className="font-bold">{like.user.name || like.user.username}</span>
-                                                                    <span className="text-muted-foreground"> liked </span>
-                                                                    <Link href={`/watch/${like.video.id}`} className="font-medium hover:text-primary transition-colors">
-                                                                        {like.video.title}
-                                                                    </Link>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-
+                                                <CardContent className="p-5">
+                                                    <div className="flex gap-4">
                                                         {/* Video thumbnail */}
-                                                        <Link href={`/watch/${like.video.id}`}>
-                                                            <div className="w-16 h-10 rounded-md overflow-hidden bg-secondary flex-shrink-0">
-                                                                {like.video.thumbnailUrl ? (
+                                                        <Link href={`/watch/${message.video.id}`}>
+                                                            <div className="w-24 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0 relative group">
+                                                                {message.video.thumbnailUrl ? (
                                                                     <img
-                                                                        src={like.video.thumbnailUrl}
-                                                                        alt={like.video.title}
-                                                                        className="w-full h-full object-cover"
+                                                                        src={message.video.thumbnailUrl}
+                                                                        alt={message.video.title}
+                                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                                                                     />
                                                                 ) : (
                                                                     <div className="w-full h-full flex items-center justify-center">
-                                                                        <Video className="w-4 h-4 text-muted-foreground" />
+                                                                        <Video className="w-6 h-6 text-muted-foreground" />
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         </Link>
 
-                                                        {/* Time */}
-                                                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                                            {formatTimeAgo(like.createdAt)}
-                                                        </span>
+                                                        <div className="flex-1 min-w-0">
+                                                            {/* Header */}
+                                                            <div className="flex items-start justify-between gap-4 mb-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Avatar className="w-6 h-6">
+                                                                        <AvatarImage src={message.user.image || undefined} />
+                                                                        <AvatarFallback className="text-xs">
+                                                                            {message.user.name?.[0] || message.user.username[0]}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                    <span className="font-bold text-sm">
+                                                                        {message.user.name || message.user.username}
+                                                                    </span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        • {formatTimeAgo(message.createdAt)}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-1">
+                                                                    {!message.isRead && (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8"
+                                                                            onClick={() => handleMarkAsRead(message.id)}
+                                                                        >
+                                                                            <Check className="w-4 h-4" />
+                                                                        </Button>
+                                                                    )}
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                                        onClick={() => handleDelete(message.id)}
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Video title */}
+                                                            <Link href={`/watch/${message.video.id}`}>
+                                                                <p className="text-xs text-muted-foreground mb-1 hover:text-primary transition-colors">
+                                                                    On: {message.video.title}
+                                                                </p>
+                                                            </Link>
+
+                                                            {/* Message content */}
+                                                            <p className="text-sm text-foreground/90">{message.content}</p>
+                                                        </div>
                                                     </div>
                                                 </CardContent>
                                             </Card>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Likes Tab */}
+                            {view === 'likes' && (
+                                <div className="space-y-4">
+                                    {loadingLikes ? (
+                                        <div className="flex items-center justify-center py-20">
+                                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        </div>
+                                    ) : likes.length === 0 ? (
+                                        <Card className="bg-card/40 border-dashed border-2 border-border/50">
+                                            <CardContent className="py-20 text-center">
+                                                <div className="w-20 h-20 bg-pink-500/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                    <Heart className="w-10 h-10 text-pink-500/40" />
+                                                </div>
+                                                <h3 className="text-xl font-bold mb-2">No likes yet</h3>
+                                                <p className="text-muted-foreground max-w-sm mx-auto">
+                                                    Recent likes on your videos will be highlighted here so you can see who's engaging with your content.
+                                                </p>
+                                            </CardContent>
+                                        </Card>
+                                    ) : (
+                                        <div className="grid gap-3">
+                                            {likes.map((like) => (
+                                                <Card
+                                                    key={like.id}
+                                                    className="bg-card/40 border-border/50 hover:border-pink-500/30 transition-all group"
+                                                >
+                                                    <CardContent className="p-4">
+                                                        <div className="flex items-center gap-4">
+                                                            {/* Heart icon */}
+                                                            <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center flex-shrink-0">
+                                                                <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
+                                                            </div>
+
+                                                            {/* User */}
+                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                <Avatar className="w-8 h-8">
+                                                                    <AvatarImage src={like.user.image || undefined} />
+                                                                    <AvatarFallback className="text-xs">
+                                                                        {like.user.name?.[0] || like.user.username[0]}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm">
+                                                                        <span className="font-bold">{like.user.name || like.user.username}</span>
+                                                                        <span className="text-muted-foreground"> liked </span>
+                                                                        <Link href={`/watch/${like.video.id}`} className="font-medium hover:text-primary transition-colors">
+                                                                            {like.video.title}
+                                                                        </Link>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Video thumbnail */}
+                                                            <Link href={`/watch/${like.video.id}`}>
+                                                                <div className="w-16 h-10 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+                                                                    {like.video.thumbnailUrl ? (
+                                                                        <img
+                                                                            src={like.video.thumbnailUrl}
+                                                                            alt={like.video.title}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center">
+                                                                            <Video className="w-4 h-4 text-muted-foreground" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </Link>
+
+                                                            {/* Time */}
+                                                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                                {formatTimeAgo(like.createdAt)}
+                                                            </span>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </PageContainer>
-                <FloatingDock />
             </div>
         </ProtectedRoute>
     );

@@ -56,22 +56,22 @@ export default function Sidebar() {
                 <SidebarItem icon={History} label="History" href="/history" isOpen={sidebarOpen} isActive={pathname === '/history'} />
             </div>
 
-            <div className={cn("border-t border-gray-200 dark:border-gray-800 my-2", !sidebarOpen && "hidden")} />
+            {sidebarOpen && <div className="my-2 border-t border-border" />}
 
             <div className="mb-6">
-                {sidebarOpen && <h3 className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase">Library</h3>}
-                <SidebarItem icon={History} label="History" isOpen={sidebarOpen} />
+                {sidebarOpen && <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Library</h3>}
+                <SidebarItem icon={History} label="History" href="/history" isOpen={sidebarOpen} isActive={pathname === '/history'} />
                 <SidebarItem icon={PlaySquare} label="Your Videos" isOpen={sidebarOpen} />
                 <SidebarItem icon={Clock} label="Watch Later" isOpen={sidebarOpen} />
                 <SidebarItem icon={ThumbsUp} label="Liked Videos" isOpen={sidebarOpen} />
             </div>
 
-            <div className={cn("border-t border-gray-200 dark:border-gray-800 my-2", !sidebarOpen && "hidden")} />
+            {sidebarOpen && <div className="my-2 border-t border-border" />}
 
             <div className="mb-6">
-                {sidebarOpen && <h3 className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase">Trending</h3>}
-                <SidebarItem icon={Flame} label="Trending" isOpen={sidebarOpen} />
-                <SidebarItem icon={Users} label="Community" isOpen={sidebarOpen} />
+                {sidebarOpen && <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Creator Studio</h3>}
+                <SidebarItem icon={Radio} label="Dashboard" href="/dashboard" isOpen={sidebarOpen} isActive={pathname === '/dashboard'} />
+                <SidebarItem icon={Users} label="Inbox" href="/inbox" isOpen={sidebarOpen} isActive={pathname === '/inbox'} />
             </div>
 
         </aside>
