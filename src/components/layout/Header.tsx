@@ -22,6 +22,7 @@ import { searchApi } from '@/lib/api/search';
 import { cn } from '@/lib/utils';
 import { History, TrendingUp } from 'lucide-react';
 import VideoUploadDialog from '@/components/video/VideoUploadDialog';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
     const { toggleSidebar, toggleDock, user, logout, isUploading, uploadDialogOpen, setUploadDialogOpen } = useStore();
@@ -171,9 +172,9 @@ export default function Header() {
                 <Button variant="ghost" size="icon" className="rounded-full hover:bg-secondary md:hidden">
                     <Search className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-secondary w-10 h-10">
-                    <Bell className="w-5 h-5" />
-                </Button>
+
+                {/* Notifications Bell */}
+                <NotificationBell />
 
                 {user && (
                     <Button

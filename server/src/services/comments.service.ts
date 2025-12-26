@@ -118,6 +118,7 @@ export class CommentsService {
 
     /**
      * Mark a comment as read
+     * Also creates a notification for the comment author
      */
     async markAsRead(commentId: string, ownerId: string): Promise<boolean> {
         // Verify the comment belongs to a video owned by this user
@@ -125,7 +126,14 @@ export class CommentsService {
             where: { id: commentId },
             include: {
                 video: {
-                    select: { userId: true }
+                    select: {
+                        id: true,
+                        userId: true,
+                        title: true
+                    }
+                },
+                user: {
+                    select: { id: true }
                 }
             }
         });
@@ -134,10 +142,39 @@ export class CommentsService {
             return false;
         }
 
+        // If already read, don't create another notification
+        if (comment.isRead) {
+            return true;
+        }
+
+        // Get channel name for notification message
+        const channel = await prisma.channel.findUnique({
+            where: { ownerId },
+            select: { name: true, handle: true }
+        });
+
         await prisma.comment.update({
             where: { id: commentId },
             data: { isRead: true }
         });
+
+        // Create notification for the comment author (not for their own videos)
+        if (comment.userId !== ownerId) {
+            await prisma.notification.create({
+                data: {
+                    userId: comment.userId,
+                    type: 'comment_viewed',
+                    message: `${channel?.name || 'A creator'} viewed your message`,
+                    data: {
+                        videoId: comment.video.id,
+                        videoTitle: comment.video.title,
+                        commentId: comment.id,
+                        channelName: channel?.name,
+                        channelHandle: channel?.handle
+                    }
+                }
+            });
+        }
 
         return true;
     }

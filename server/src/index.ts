@@ -25,6 +25,7 @@ import analyticsRouter from './routes/analytics.routes';
 import likesRouter from './routes/likes.routes';
 import commentsRouter from './routes/comments.routes';
 import inboxRouter from './routes/inbox.routes';
+import notificationsRouter from './routes/notifications.routes';
 import { startTrendingWorker, stopTrendingWorker } from './workers/trending.worker';
 import { startVideoWorker, stopVideoWorker } from './workers/video.worker';
 
@@ -74,6 +75,7 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/videos', likesRouter);    // /api/videos/:id/like
 app.use('/api/videos', commentsRouter); // /api/videos/:id/comments
 app.use('/api/inbox', inboxRouter);     // /api/inbox
+app.use('/api/notifications', notificationsRouter); // /api/notifications
 
 // 404 handler
 app.use((_req, res) => {
