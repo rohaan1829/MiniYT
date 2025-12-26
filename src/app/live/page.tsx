@@ -29,7 +29,7 @@ export default function LivePage() {
             <main
                 className={cn(
                     "px-4 md:px-8 pt-8 max-w-[1920px] mx-auto space-y-6 transition-[padding] duration-300",
-                    sidebarOpen ? "md:pl-72" : "md:pl-28"
+                    sidebarOpen ? "md:pl-72" : "md:pl-8"
                 )}
             >
                 <div className="flex items-center gap-3 mb-8">

@@ -43,9 +43,7 @@ export default function Sidebar() {
                 "fixed left-0 top-24 bottom-0 z-40 bg-background/80 backdrop-blur-md border-r border-border transition-[width,transform] duration-300 overflow-y-auto hide-scrollbar",
                 sidebarOpen
                     ? "w-64 px-4 py-4"
-                    : isWatchPage
-                        ? "w-0 px-0 -translate-x-full border-none" // Completely hidden on Watch
-                        : "w-20 px-2 py-4" // Mini sidebar on Home
+                    : "w-0 px-0 -translate-x-full border-none"
             )}
         >
             <div className="mb-6">

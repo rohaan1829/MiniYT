@@ -62,7 +62,7 @@ export default function HistoryPage() {
             <main
                 className={cn(
                     "px-4 md:px-8 pt-8 max-w-[1920px] mx-auto space-y-6 transition-[padding] duration-300",
-                    sidebarOpen ? "md:pl-72" : "md:pl-28"
+                    sidebarOpen ? "md:pl-72" : "md:pl-8"
                 )}
             >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

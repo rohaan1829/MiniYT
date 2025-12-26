@@ -73,11 +73,7 @@ export default function Header() {
     const isWatchPage = pathname?.startsWith('/watch');
 
     const handleMenuClick = () => {
-        if (isWatchPage) {
-            toggleDock();
-        } else {
-            toggleSidebar();
-        }
+        toggleSidebar();
     };
 
     const handleLogout = () => {

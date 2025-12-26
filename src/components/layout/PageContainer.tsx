@@ -17,7 +17,7 @@ export default function PageContainer({ children, className }: PageContainerProp
             className={cn(
                 "pt-4 transition-[padding] duration-300",
                 className,
-                sidebarOpen ? "md:pl-72" : "md:pl-28"
+                sidebarOpen ? "md:pl-72" : "md:pl-0"
             )}
         >
             {children}
