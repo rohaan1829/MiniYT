@@ -121,14 +121,17 @@ model Comment {
 }
 
 model WatchHistory {
-  id       String   @id @default(cuid())
-  userId   String
-  videoId  String
-  duration Int      @default(0)
-  viewedAt DateTime @default(now())
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  video    Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  userId        String
+  videoId       String
+  duration      Int      @default(0)   // Video total duration in seconds
+  watchProgress Int      @default(0)   // Seconds watched (resume position)
+  viewedAt      DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video         Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, videoId])
+  @@index([userId, viewedAt])
   @@map("watch_history")
 }
 

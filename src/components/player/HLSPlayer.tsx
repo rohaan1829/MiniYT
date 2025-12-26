@@ -5,6 +5,7 @@ import Hls from 'hls.js';
 import { cn } from '@/lib/utils';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, RectangleHorizontal, Loader2 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { historyApi } from '@/lib/api/history';
 
 interface HLSPlayerProps {
     src: string;
@@ -12,6 +13,7 @@ interface HLSPlayerProps {
     className?: string;
     autoPlay?: boolean;
     onEnded?: () => void;
+    videoId?: string; // For progress tracking
 }
 
 // Format seconds to MM:SS or HH:MM:SS
@@ -31,7 +33,7 @@ function formatTime(seconds: number): string {
 // Available playback speeds
 const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-export default function HLSPlayer({ src, poster, className, autoPlay = false, onEnded }: HLSPlayerProps) {
+export default function HLSPlayer({ src, poster, className, autoPlay = false, onEnded, videoId }: HLSPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const previewVideoRef = useRef<HTMLVideoElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,7 +64,101 @@ export default function HLSPlayer({ src, poster, className, autoPlay = false, on
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     // Cinematic mode from global store
-    const { cinematicMode, toggleCinematicMode } = useStore();
+    const { cinematicMode, toggleCinematicMode, user } = useStore();
+
+    // Progress tracking refs
+    const lastSavedProgress = useRef<number>(0);
+    const hasLoadedProgress = useRef<boolean>(false);
+
+    // Load saved progress and resume playback
+    useEffect(() => {
+        if (!videoId || !user || hasLoadedProgress.current) return;
+
+        const loadProgress = async () => {
+            try {
+                const response = await historyApi.getVideoProgress(videoId);
+                if (response.success && response.data.watchProgress > 0) {
+                    const video = videoRef.current;
+                    if (video) {
+                        const onCanPlay = () => {
+                            // Only seek if we haven't started watching and progress is substantial
+                            if (video.currentTime < 5 && response.data.watchProgress > 5) {
+                                video.currentTime = response.data.watchProgress;
+                            }
+                            video.removeEventListener('canplay', onCanPlay);
+                        };
+                        video.addEventListener('canplay', onCanPlay);
+                    }
+                    lastSavedProgress.current = response.data.watchProgress;
+                }
+                hasLoadedProgress.current = true;
+            } catch (err) {
+                console.error('Failed to load watch progress:', err);
+                hasLoadedProgress.current = true;
+            }
+        };
+
+        loadProgress();
+    }, [videoId, user]);
+
+    // Save progress periodically and on pause/unmount
+    useEffect(() => {
+        if (!videoId || !user) return;
+
+        const video = videoRef.current;
+        if (!video) return;
+
+        let saveInterval: NodeJS.Timeout | null = null;
+
+        const saveProgress = async (progress: number) => {
+            // Don't save if progress hasn't changed significantly (>5 seconds)
+            if (Math.abs(progress - lastSavedProgress.current) < 5) return;
+            // Don't save if video is almost finished (>95%)
+            if (progress / (video.duration || 1) > 0.95) return;
+
+            try {
+                await historyApi.recordProgress(videoId, Math.floor(progress), Math.floor(video.duration || 0));
+                lastSavedProgress.current = progress;
+            } catch (err) {
+                console.error('Failed to save watch progress:', err);
+            }
+        };
+
+        const startSaving = () => {
+            if (saveInterval) return;
+            saveInterval = setInterval(() => {
+                if (!video.paused && video.currentTime > 0) {
+                    saveProgress(video.currentTime);
+                }
+            }, 10000); // Save every 10 seconds
+        };
+
+        const stopSaving = () => {
+            if (saveInterval) {
+                clearInterval(saveInterval);
+                saveInterval = null;
+            }
+            // Save current progress when paused
+            if (video.currentTime > 0) {
+                saveProgress(video.currentTime);
+            }
+        };
+
+        video.addEventListener('play', startSaving);
+        video.addEventListener('pause', stopSaving);
+        video.addEventListener('ended', stopSaving);
+
+        return () => {
+            if (saveInterval) clearInterval(saveInterval);
+            video.removeEventListener('play', startSaving);
+            video.removeEventListener('pause', stopSaving);
+            video.removeEventListener('ended', stopSaving);
+            // Save on unmount
+            if (video.currentTime > 0) {
+                saveProgress(video.currentTime);
+            }
+        };
+    }, [videoId, user]);
 
     // Initial HLS Setup
     useEffect(() => {

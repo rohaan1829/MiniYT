@@ -74,6 +74,7 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                     )}
                     poster={video.thumbnailUrl}
                     autoPlay={true}
+                    videoId={video.id}
                 />
             </div>
 
