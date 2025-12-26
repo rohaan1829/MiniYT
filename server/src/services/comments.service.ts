@@ -206,6 +206,113 @@ export class CommentsService {
             where: { videoId }
         });
     }
+
+    /**
+     * Creator replies to a private message, making the thread public
+     */
+    async replyToComment(commentId: string, creatorUserId: string, replyContent: string) {
+        // Find the original comment and verify creator owns the video
+        const originalComment = await prisma.comment.findUnique({
+            where: { id: commentId },
+            include: {
+                video: {
+                    select: { id: true, userId: true }
+                }
+            }
+        });
+
+        if (!originalComment) {
+            throw new Error('Comment not found');
+        }
+
+        if (originalComment.video.userId !== creatorUserId) {
+            throw new Error('Only the video owner can reply');
+        }
+
+        // Use a transaction to:
+        // 1. Mark the original comment as public and read
+        // 2. Create the reply as public
+        const [updatedOriginal, reply] = await prisma.$transaction([
+            prisma.comment.update({
+                where: { id: commentId },
+                data: { isPublic: true, isRead: true }
+            }),
+            prisma.comment.create({
+                data: {
+                    videoId: originalComment.videoId,
+                    userId: creatorUserId,
+                    content: replyContent,
+                    isPublic: true,
+                    isRead: true,
+                    parentId: commentId
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            name: true,
+                            image: true
+                        }
+                    }
+                }
+            })
+        ]);
+
+        return reply;
+    }
+
+    /**
+     * Get public comments for a video (displayed on the watch page)
+     * Returns top-level public comments with their replies
+     */
+    async getPublicComments(videoId: string, limit: number = 50, offset: number = 0) {
+        // Fetch top-level public comments (those without parentId)
+        const comments = await prisma.comment.findMany({
+            where: {
+                videoId,
+                isPublic: true,
+                parentId: null
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        name: true,
+                        image: true
+                    }
+                },
+                replies: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true
+                            }
+                        }
+                    },
+                    orderBy: { createdAt: 'asc' }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            skip: offset
+        });
+
+        // Get the video owner ID to identify creator replies
+        const video = await prisma.video.findUnique({
+            where: { id: videoId },
+            select: { userId: true }
+        });
+
+        return {
+            comments,
+            creatorId: video?.userId || null
+        };
+    }
 }
 
 export const commentsService = new CommentsService();

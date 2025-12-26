@@ -10,6 +10,7 @@ import PageContainer from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 import {
     Inbox,
     Heart,
@@ -19,11 +20,15 @@ import {
     CheckCheck,
     Trash2,
     ArrowLeft,
-    Video
+    Video,
+    Reply,
+    Send,
+    Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatTimeAgo } from '@/lib/formatters';
 import { inboxApi, InboxMessage, InboxLike } from '@/lib/api/interactions';
+import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 type TabView = 'messages' | 'likes';
@@ -31,6 +36,7 @@ type TabView = 'messages' | 'likes';
 export default function InboxPage() {
     const { user } = useStore();
     const router = useRouter();
+    const { toast } = useToast();
     const [view, setView] = useState<TabView>('messages');
 
     // Messages state
@@ -41,6 +47,11 @@ export default function InboxPage() {
     // Likes state
     const [likes, setLikes] = useState<InboxLike[]>([]);
     const [loadingLikes, setLoadingLikes] = useState(true);
+
+    // Reply state
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyContent, setReplyContent] = useState('');
+    const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
 
@@ -114,6 +125,35 @@ export default function InboxPage() {
             setMessages(prev => prev.filter(m => m.id !== messageId));
         } catch (err) {
             console.error('Failed to delete message:', err);
+        }
+    };
+
+    const handleReply = async (messageId: string) => {
+        if (!replyContent.trim()) return;
+
+        setIsSubmittingReply(true);
+        try {
+            const response = await inboxApi.replyToMessage(messageId, replyContent.trim());
+            if (response.success) {
+                toast({
+                    title: 'Reply sent!',
+                    description: 'Your reply is now public on the video.',
+                });
+                // Update the message to show it's now public
+                setMessages(prev => prev.map(m =>
+                    m.id === messageId ? { ...m, isPublic: true, isRead: true } : m
+                ));
+                setReplyingTo(null);
+                setReplyContent('');
+            }
+        } catch (err: any) {
+            toast({
+                title: 'Failed to send reply',
+                description: err.response?.data?.message || 'Please try again.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsSubmittingReply(false);
         }
     };
 
@@ -248,7 +288,8 @@ export default function InboxPage() {
                                                 key={message.id}
                                                 className={cn(
                                                     "bg-card/40 border-border/50 transition-all hover:border-primary/30",
-                                                    !message.isRead && "border-l-4 border-l-primary bg-primary/5"
+                                                    !message.isRead && "border-l-4 border-l-primary bg-primary/5",
+                                                    message.isPublic && "border-l-4 border-l-green-500"
                                                 )}
                                             >
                                                 <CardContent className="p-5">
@@ -273,7 +314,7 @@ export default function InboxPage() {
                                                         <div className="flex-1 min-w-0">
                                                             {/* Header */}
                                                             <div className="flex items-start justify-between gap-4 mb-2">
-                                                                <div className="flex items-center gap-2">
+                                                                <div className="flex items-center gap-2 flex-wrap">
                                                                     <Avatar className="w-6 h-6">
                                                                         <AvatarImage src={message.user.image || undefined} />
                                                                         <AvatarFallback className="text-xs">
@@ -286,6 +327,12 @@ export default function InboxPage() {
                                                                     <span className="text-xs text-muted-foreground">
                                                                         • {formatTimeAgo(message.createdAt)}
                                                                     </span>
+                                                                    {message.isPublic && (
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full">
+                                                                            <Globe className="w-3 h-3" />
+                                                                            PUBLIC
+                                                                        </span>
+                                                                    )}
                                                                 </div>
 
                                                                 <div className="flex items-center gap-1">
@@ -295,8 +342,20 @@ export default function InboxPage() {
                                                                             size="icon"
                                                                             className="h-8 w-8"
                                                                             onClick={() => handleMarkAsRead(message.id)}
+                                                                            title="Mark as read"
                                                                         >
                                                                             <Check className="w-4 h-4" />
+                                                                        </Button>
+                                                                    )}
+                                                                    {!message.isPublic && (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-primary"
+                                                                            onClick={() => setReplyingTo(replyingTo === message.id ? null : message.id)}
+                                                                            title="Reply (makes comment public)"
+                                                                        >
+                                                                            <Reply className="w-4 h-4" />
                                                                         </Button>
                                                                     )}
                                                                     <Button
@@ -304,6 +363,7 @@ export default function InboxPage() {
                                                                         size="icon"
                                                                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                                                         onClick={() => handleDelete(message.id)}
+                                                                        title="Delete"
                                                                     >
                                                                         <Trash2 className="w-4 h-4" />
                                                                     </Button>
@@ -319,6 +379,52 @@ export default function InboxPage() {
 
                                                             {/* Message content */}
                                                             <p className="text-sm text-foreground/90">{message.content}</p>
+
+                                                            {/* Reply Input */}
+                                                            {replyingTo === message.id && (
+                                                                <div className="mt-4 p-4 bg-secondary/30 rounded-xl border border-border/50 space-y-3">
+                                                                    <p className="text-xs text-muted-foreground font-medium">
+                                                                        Your reply will make this comment public on the video.
+                                                                    </p>
+                                                                    <Textarea
+                                                                        value={replyContent}
+                                                                        onChange={(e) => setReplyContent(e.target.value)}
+                                                                        placeholder="Write your reply..."
+                                                                        className="min-h-[80px] bg-background/50"
+                                                                        maxLength={2000}
+                                                                    />
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            {replyContent.length}/2000
+                                                                        </span>
+                                                                        <div className="flex gap-2">
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                onClick={() => {
+                                                                                    setReplyingTo(null);
+                                                                                    setReplyContent('');
+                                                                                }}
+                                                                            >
+                                                                                Cancel
+                                                                            </Button>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                onClick={() => handleReply(message.id)}
+                                                                                disabled={!replyContent.trim() || isSubmittingReply}
+                                                                                className="gap-2"
+                                                                            >
+                                                                                {isSubmittingReply ? (
+                                                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                                                ) : (
+                                                                                    <Send className="w-4 h-4" />
+                                                                                )}
+                                                                                Reply & Publish
+                                                                            </Button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </CardContent>

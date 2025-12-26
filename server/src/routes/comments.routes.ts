@@ -40,4 +40,22 @@ router.get('/:id/comments/count', async (req, res, next) => {
     }
 });
 
+// GET /api/videos/:id/comments/public - Get public comments for a video
+router.get('/:id/comments/public', async (req, res, next) => {
+    try {
+        const videoId = req.params.id;
+        const { limit = '50', offset = '0' } = req.query;
+
+        const result = await commentsService.getPublicComments(
+            videoId,
+            parseInt(limit as string),
+            parseInt(offset as string)
+        );
+        return res.json({ success: true, data: result });
+    } catch (error) {
+        logger.error('Get public comments error:', error);
+        return next(error);
+    }
+});
+
 export default router;

@@ -114,4 +114,33 @@ router.delete('/:id', authenticate, async (req, res, next) => {
     }
 });
 
+// POST /api/inbox/:id/reply - Creator replies to a message (makes it public)
+router.post('/:id/reply', authenticate, async (req, res, next) => {
+    try {
+        const commentId = req.params.id;
+        const creatorUserId = req.user!.id;
+        const { content } = req.body;
+
+        if (!content || content.trim().length === 0) {
+            return res.status(400).json({ success: false, message: 'Reply content is required' });
+        }
+
+        if (content.length > 2000) {
+            return res.status(400).json({ success: false, message: 'Reply too long (max 2000 characters)' });
+        }
+
+        const reply = await commentsService.replyToComment(commentId, creatorUserId, content.trim());
+        return res.status(201).json({ success: true, data: reply });
+    } catch (error: any) {
+        logger.error('Reply to message error:', error);
+        if (error.message === 'Comment not found') {
+            return res.status(404).json({ success: false, message: 'Message not found' });
+        }
+        if (error.message === 'Only the video owner can reply') {
+            return res.status(403).json({ success: false, message: 'Not authorized to reply' });
+        }
+        return next(error);
+    }
+});
+
 export default router;
