@@ -104,3 +104,29 @@ export default function VideoCard({ video, className }: VideoCardProps) {
         </div>
     );
 }
+
+export function VideoCardSkeleton() {
+    return (
+        <div className="flex flex-col gap-3">
+            {/* Thumbnail Skeleton */}
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted animate-pulse" />
+
+            <div className="flex gap-3">
+                {/* Avatar Skeleton */}
+                <div className="h-9 w-9 rounded-full bg-muted animate-pulse shrink-0" />
+
+                <div className="flex-1 space-y-2">
+                    {/* Title Skeleton */}
+                    <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                    <div className="h-4 w-[80%] bg-muted animate-pulse rounded" />
+
+                    {/* Meta Skeleton */}
+                    <div className="space-y-1 pt-1">
+                        <div className="h-3 w-[60%] bg-muted animate-pulse rounded" />
+                        <div className="h-3 w-[40%] bg-muted animate-pulse rounded" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

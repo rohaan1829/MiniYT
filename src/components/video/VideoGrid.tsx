@@ -1,11 +1,10 @@
 import { CATEGORIES } from '@/data/mockData';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import VideoCard from './VideoCard';
+import VideoCard, { VideoCardSkeleton } from './VideoCard';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { videoApi } from '@/lib/api/videos';
-import { Loader2 } from 'lucide-react';
 
 export default function VideoGrid() {
     const [activeCategory, setActiveCategory] = useState('all');
@@ -24,7 +23,8 @@ export default function VideoGrid() {
             } catch (error) {
                 console.error('Failed to fetch videos:', error);
             } finally {
-                setIsLoading(false);
+                // Keep loading slightly longer for a smoother skeleton flash
+                setTimeout(() => setIsLoading(false), 300);
             }
         }
 
@@ -58,23 +58,22 @@ export default function VideoGrid() {
             </ScrollArea>
 
             {/* Grid */}
-            {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-                    {filteredVideos.length > 0 ? (
-                        filteredVideos.map((video) => (
-                            <VideoCard key={video.id} video={video} />
-                        ))
-                    ) : (
-                        <div className="col-span-full py-20 text-center text-muted-foreground">
-                            No videos found. Check back later!
-                        </div>
-                    )}
-                </div>
-            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+                {isLoading ? (
+                    // Show 8 skeletons while loading
+                    Array.from({ length: 8 }).map((_, i) => (
+                        <VideoCardSkeleton key={i} />
+                    ))
+                ) : filteredVideos.length > 0 ? (
+                    filteredVideos.map((video) => (
+                        <VideoCard key={video.id} video={video} />
+                    ))
+                ) : (
+                    <div className="col-span-full py-20 text-center text-muted-foreground">
+                        No videos found. Check back later!
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

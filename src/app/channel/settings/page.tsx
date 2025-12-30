@@ -148,7 +148,7 @@ export default function ChannelSettingsPage() {
                             <h1 className="text-3xl font-black tracking-tight">Channel customization</h1>
                             <p className="text-muted-foreground">Manage your channel details and branding</p>
                         </div>
-                        <Link href="/channel/analytics">
+                        <Link href="/dashboard">
                             <Button className="rounded-full gap-2 bg-secondary hover:bg-secondary/80 text-foreground border border-border/50 shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>
                                 View Analytics

@@ -41,7 +41,7 @@ import Link from 'next/link';
 
 type TabView = 'overview' | 'content' | 'audience';
 
-export default function ChannelAnalyticsPage() {
+export default function DashboardPage() {
     const { user, sidebarOpen } = useStore();
     const router = useRouter();
     const [view, setView] = useState<TabView>('overview');
@@ -121,7 +121,7 @@ export default function ChannelAnalyticsPage() {
                 <div className="min-h-screen flex items-center justify-center">
                     <div className="text-center space-y-4">
                         <h1 className="text-2xl font-bold">No Channel Found</h1>
-                        <p className="text-muted-foreground">You need a channel to view analytics.</p>
+                        <p className="text-muted-foreground">You need a channel to view dashboard.</p>
                         <Button onClick={() => router.push('/channel/create')}>Create Channel</Button>
                     </div>
                 </div>
@@ -141,7 +141,7 @@ export default function ChannelAnalyticsPage() {
 
     return (
         <ProtectedRoute>
-            <div className="min-h-screen bg-background text-foreground relative pb-32">
+            <div className="min-h-screen bg-background text-foreground relative pb-32 animate-page-enter">
                 <Header />
                 <Sidebar />
 
@@ -161,7 +161,7 @@ export default function ChannelAnalyticsPage() {
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <TrendingUp className="h-5 w-5 text-primary" />
-                                        <span className="text-sm font-bold text-primary uppercase tracking-widest">Analytics Dashboard</span>
+                                        <span className="text-sm font-bold text-primary uppercase tracking-widest">Creator Dashboard</span>
                                     </div>
                                     <h1 className="text-4xl font-black tracking-tight">{user.channel.name}</h1>
                                 </div>
@@ -451,7 +451,7 @@ export default function ChannelAnalyticsPage() {
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                         <Card className="bg-card/40 backdrop-blur-sm border-border/50">
                                             <CardHeader>
-                                                <CardTitle className="text-xl font-bold">Subscriber Overview</CardTitle>
+                                                <CardTitle className="text-xl font-bold"> Subscriber Overview</CardTitle>
                                                 <CardDescription>Your channel's subscriber metrics</CardDescription>
                                             </CardHeader>
                                             <CardContent className="space-y-6">

@@ -135,7 +135,7 @@ export default function ProfilePage() {
                                                 <Settings className="h-5 w-5" /> Manage Channel
                                             </Button>
                                         </Link>
-                                        <Link href="/channel/analytics" className="w-full">
+                                        <Link href="/dashboard" className="w-full">
                                             <Button variant="ghost" className="w-full justify-start h-12 rounded-xl gap-3 hover:bg-primary/5 hover:text-primary transition-all font-bold">
                                                 <BarChart3 className="h-5 w-5" /> Channel Analytics
                                             </Button>

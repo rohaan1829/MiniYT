@@ -19,15 +19,18 @@ const SidebarItem = ({ icon: Icon, label, href = "#", isActive, isOpen }: Sideba
         <Link
             href={href}
             className={cn(
-                "flex items-center p-3 rounded-lg mb-1 transition-colors",
+                "flex items-center p-3 rounded-lg mb-1 transition-colors group",
                 isActive
                     ? "bg-primary/10 text-primary"
                     : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
                 !isOpen && "justify-center"
             )}
         >
-            <Icon size={20} className={cn(isActive && "text-primary")} />
-            {isOpen && <span className="ml-4 font-medium text-sm">{label}</span>}
+            <Icon size={20} className={cn(
+                "transition-transform duration-200 group-hover:scale-110",
+                isActive && "text-primary"
+            )} />
+            {isOpen && <span className="ml-4 font-medium text-sm transition-all duration-200">{label}</span>}
         </Link>
     );
 };

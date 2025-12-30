@@ -27,7 +27,7 @@ export default function Home() {
 
       <main
         className={cn(
-          "px-4 md:px-8 pt-8 max-w-[1920px] mx-auto space-y-8 transition-[padding] duration-300",
+          "px-4 md:px-8 pt-8 max-w-[1920px] mx-auto space-y-8 transition-[padding] duration-300 animate-page-enter",
           sidebarOpen ? "md:pl-72" : "md:pl-8"
         )}
       >
