@@ -51,6 +51,11 @@ export default function Sidebar() {
                 <SidebarItem icon={Compass} label="Explore" href="/explore" isOpen={sidebarOpen} isActive={pathname === '/explore'} />
                 <SidebarItem icon={Flame} label="Trending" href="/trending" isOpen={sidebarOpen} isActive={pathname === '/trending'} />
                 <SidebarItem icon={Radio} label="Live" href="/live" isOpen={sidebarOpen} isActive={pathname === '/live'} />
+            </div>
+
+            {/* Hidden Library and History as per user request */}
+            {/* 
+            <div className="mb-6">
                 <div className="my-2 border-t border-border" />
                 <SidebarItem icon={PlaySquare} label="Library" href="/library" isOpen={sidebarOpen} isActive={pathname === '/library'} />
                 <SidebarItem icon={History} label="History" href="/history" isOpen={sidebarOpen} isActive={pathname === '/history'} />
@@ -67,6 +72,7 @@ export default function Sidebar() {
             </div>
 
             {sidebarOpen && <div className="my-2 border-t border-border" />}
+            */}
 
             <div className="mb-6">
                 {sidebarOpen && <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Creator Studio</h3>}
