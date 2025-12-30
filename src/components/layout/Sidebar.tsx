@@ -33,7 +33,7 @@ const SidebarItem = ({ icon: Icon, label, href = "#", isActive, isOpen }: Sideba
 };
 
 export default function Sidebar() {
-    const sidebarOpen = useStore((state) => state.sidebarOpen);
+    const { sidebarOpen, isAuthenticated, user } = useStore();
     const pathname = usePathname();
     const isWatchPage = pathname?.startsWith('/watch');
 
@@ -74,11 +74,20 @@ export default function Sidebar() {
             {sidebarOpen && <div className="my-2 border-t border-border" />}
             */}
 
-            <div className="mb-6">
-                {sidebarOpen && <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Creator Studio</h3>}
-                <SidebarItem icon={Radio} label="Dashboard" href="/dashboard" isOpen={sidebarOpen} isActive={pathname === '/dashboard'} />
-                <SidebarItem icon={Users} label="Inbox" href="/inbox" isOpen={sidebarOpen} isActive={pathname === '/inbox'} />
-            </div>
+            {isAuthenticated && (
+                <div className="mb-6">
+                    {sidebarOpen && (
+                        <>
+                            <div className="my-2 border-t border-border" />
+                            <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Creator Studio</h3>
+                        </>
+                    )}
+                    {user?.channel && (
+                        <SidebarItem icon={Radio} label="Dashboard" href="/dashboard" isOpen={sidebarOpen} isActive={pathname === '/dashboard'} />
+                    )}
+                    <SidebarItem icon={Users} label="Inbox" href="/inbox" isOpen={sidebarOpen} isActive={pathname === '/inbox'} />
+                </div>
+            )}
 
         </aside>
     );
