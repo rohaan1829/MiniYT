@@ -255,15 +255,17 @@ model PostLike {
 }
 
 model Subscription {
-  id        String   @id @default(cuid())
-  userId    String
-  channelId String
-  createdAt DateTime @default(now())
+  id               String   @id @default(cuid())
+  userId           String
+  channelId        String
+  createdAt        DateTime @default(now())
+  notifyOnNewVideo Boolean  @default(true)
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@unique([userId, channelId])
+  @@index([channelId])
   @@map("subscriptions")
 }
 

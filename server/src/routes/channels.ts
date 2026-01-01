@@ -5,6 +5,7 @@ import { authenticate, optionalAuthenticate, AuthRequest } from '../middleware/a
 import { upload } from '../middleware/upload';
 import { storageProvider } from '../services/storage.service';
 import * as channelService from '../services/channel.service';
+import subscriptionService from '../services/subscription.service';
 import { BadRequestError } from '../utils/errors';
 import prisma from '../config/database';
 
@@ -72,7 +73,12 @@ router.get('/handle/:handle', optionalAuthenticate, async (req: AuthRequest, res
 // Subscribe to a channel
 router.post('/:channelId/subscribe', authenticate, async (req: AuthRequest, res, next) => {
     try {
-        const subscription = await channelService.subscribe(req.user!.id, req.params.channelId);
+        const { notifyOnNewVideo = true } = req.body;
+        const subscription = await subscriptionService.subscribe(
+            req.user!.id,
+            req.params.channelId,
+            notifyOnNewVideo
+        );
         res.json({
             success: true,
             message: 'Subscribed successfully',
@@ -86,7 +92,7 @@ router.post('/:channelId/subscribe', authenticate, async (req: AuthRequest, res,
 // Unsubscribe from a channel
 router.delete('/:channelId/subscribe', authenticate, async (req: AuthRequest, res, next) => {
     try {
-        await channelService.unsubscribe(req.user!.id, req.params.channelId);
+        await subscriptionService.unsubscribe(req.user!.id, req.params.channelId);
         res.json({
             success: true,
             message: 'Unsubscribed successfully',

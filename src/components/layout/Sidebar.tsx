@@ -52,6 +52,9 @@ export default function Sidebar() {
             <div className="mb-6">
                 <SidebarItem icon={Home} label="Home" href="/" isOpen={sidebarOpen} isActive={pathname === '/'} />
                 <SidebarItem icon={Compass} label="Explore" href="/explore" isOpen={sidebarOpen} isActive={pathname === '/explore'} />
+                {isAuthenticated && (
+                    <SidebarItem icon={Users} label="Subscriptions" href="/subscriptions" isOpen={sidebarOpen} isActive={pathname === '/subscriptions'} />
+                )}
                 <SidebarItem icon={Flame} label="Trending" href="/trending" isOpen={sidebarOpen} isActive={pathname === '/trending'} />
                 <SidebarItem icon={Radio} label="Live" href="/live" isOpen={sidebarOpen} isActive={pathname === '/live'} />
             </div>
