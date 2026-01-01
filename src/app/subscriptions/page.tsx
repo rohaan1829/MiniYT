@@ -16,13 +16,11 @@ import {
     Video,
     Loader2,
     ArrowLeft,
-    Play,
-    Eye,
-    Clock,
-    Bell,
-    BellOff,
     Compass,
+    Bell,
+    BellOff
 } from 'lucide-react';
+import VideoCard from '@/components/video/VideoCard';
 import { cn } from '@/lib/utils';
 import { formatTimeAgo, formatViews } from '@/lib/formatters';
 import { subscriptionsApi, SubscribedChannel, SubscriptionFeedVideo } from '@/lib/api/subscriptions';
@@ -192,68 +190,9 @@ export default function SubscriptionsPage() {
                                             </CardContent>
                                         </Card>
                                     ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
                                             {feedVideos.map((video) => (
-                                                <Link key={video.id} href={`/watch/${video.id}`}>
-                                                    <Card className="bg-card/40 border-border/50 hover:border-primary/30 transition-all overflow-hidden group cursor-pointer">
-                                                        {/* Thumbnail */}
-                                                        <div className="relative aspect-video bg-secondary">
-                                                            {video.thumbnailUrl ? (
-                                                                <img
-                                                                    src={video.thumbnailUrl}
-                                                                    alt={video.title}
-                                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <Video className="w-12 h-12 text-muted-foreground" />
-                                                                </div>
-                                                            )}
-                                                            {/* Duration badge */}
-                                                            {video.duration && (
-                                                                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
-                                                                    {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
-                                                                </div>
-                                                            )}
-                                                            {/* Hover play */}
-                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                                <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
-                                                                    <Play className="w-6 h-6 text-white fill-white ml-1" />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <CardContent className="p-3">
-                                                            <div className="flex gap-3">
-                                                                {/* Channel avatar */}
-                                                                <Avatar className="w-9 h-9 flex-shrink-0">
-                                                                    <AvatarImage src={video.user.channel?.avatarUrl || video.user.image || undefined} />
-                                                                    <AvatarFallback className="text-xs">
-                                                                        {video.user.channel?.name?.[0] || video.user.name?.[0] || video.user.username[0]}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <h3 className="font-semibold text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-                                                                        {video.title}
-                                                                    </h3>
-                                                                    <p className="text-xs text-muted-foreground truncate">
-                                                                        {video.user.channel?.name || video.user.name || video.user.username}
-                                                                        {video.user.channel?.verified && (
-                                                                            <span className="ml-1 text-primary">✓</span>
-                                                                        )}
-                                                                    </p>
-                                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                                                        <span className="flex items-center gap-1">
-                                                                            <Eye className="w-3 h-3" />
-                                                                            {formatViews(video.views)}
-                                                                        </span>
-                                                                        <span>•</span>
-                                                                        <span>{formatTimeAgo(video.publishedAt || video.createdAt)}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
-                                                </Link>
+                                                <VideoCard key={video.id} video={video} />
                                             ))}
                                         </div>
                                     )}
