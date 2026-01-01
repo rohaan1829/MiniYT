@@ -7,7 +7,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, Settings, Upload, Loader2 } from 'lucide-react';
+import { Settings, Upload, Loader2 } from 'lucide-react';
 import PageContainer from '@/components/layout/PageContainer';
 import { useStore } from '@/store/useStore';
 import { channelApi } from '@/lib/api/channels';
@@ -31,54 +31,26 @@ interface ChannelData {
     verified: boolean;
     ownerId: string;
     isSubscribed: boolean;
+    notifyOnNewVideo: boolean;
 }
+
+import SubscribeButton from '@/components/channel/SubscribeButton';
+import { formatViews } from '@/lib/formatters';
 
 export default function ChannelPage() {
     const params = useParams();
     const id = params?.id as string;
-    const { user, subscribe: storeSubscribe, unsubscribe: storeUnsubscribe } = useStore();
+    const { user } = useStore();
 
     const [channel, setChannel] = useState<ChannelData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isSubscribing, setIsSubscribing] = useState(false);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [videos, setVideos] = useState<VideoData[]>([]);
     const [isLoadingVideos, setIsLoadingVideos] = useState(true);
 
     const isOwner = user && channel && user.id === channel.ownerId;
 
-    const handleSubscribe = async () => {
-        if (!user) {
-            // Redirect to login or show toast
-            return;
-        }
-
-        if (!channel) return;
-
-        setIsSubscribing(true);
-        try {
-            if (channel.isSubscribed) {
-                await storeUnsubscribe(channel.id);
-                setChannel({
-                    ...channel,
-                    isSubscribed: false,
-                    subscriberCount: channel.subscriberCount - 1,
-                });
-            } else {
-                await storeSubscribe(channel.id);
-                setChannel({
-                    ...channel,
-                    isSubscribed: true,
-                    subscriberCount: channel.subscriberCount + 1,
-                });
-            }
-        } catch (err) {
-            // Error already handled in store
-        } finally {
-            setIsSubscribing(false);
-        }
-    };
 
     const fetchChannelData = async () => {
         if (!id) return;
@@ -225,27 +197,14 @@ export default function ChannelPage() {
                                 </Button>
                             </>
                         ) : (
-                            <>
-                                <Button
-                                    className={`flex-1 md:flex-none rounded-full px-8 font-bold h-10 text-base transition-all ${channel.isSubscribed
-                                        ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                                        : 'bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200'
-                                        }`}
-                                    onClick={handleSubscribe}
-                                    disabled={isSubscribing}
-                                >
-                                    {isSubscribing ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : channel.isSubscribed ? (
-                                        'Subscribed'
-                                    ) : (
-                                        'Subscribe'
-                                    )}
-                                </Button>
-                                <Button variant="secondary" size="icon" className="rounded-full h-10 w-10">
-                                    <Bell className="w-5 h-5" />
-                                </Button>
-                            </>
+                            <SubscribeButton
+                                channelId={channel.id}
+                                channelName={channel.name}
+                                initialSubscribed={channel.isSubscribed}
+                                initialNotify={channel.notifyOnNewVideo}
+                                subscriberCount={channel.subscriberCount}
+                                size="lg"
+                            />
                         )}
                     </div>
                 </div>

@@ -13,16 +13,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatViews, formatTimeAgo } from '@/lib/formatters';
 import { API_ROOT_URL } from '@/lib/api/client';
+import SubscribeButton from '@/components/channel/SubscribeButton';
 
 export default function VideoPlayerSection({ video }: { video: any }) {
-    const { cinematicMode, addToHistory, addToLibrary, library, subscribe, unsubscribe, user } = useStore();
+    const { cinematicMode, addToHistory, addToLibrary, library, user } = useStore();
     const [isDescExpanded, setIsDescExpanded] = useState(false);
-    const [isSubscribing, setIsSubscribing] = useState(false);
     const router = useRouter();
 
     const inLibrary = library.some(v => v.id === video.id);
     const channel = video.user?.channel;
-    const isSubscribed = channel?.isSubscribed; // Assuming this might be passed from backend eventually
 
     useEffect(() => {
         if (video) {
@@ -30,28 +29,6 @@ export default function VideoPlayerSection({ video }: { video: any }) {
         }
     }, [video, addToHistory]);
 
-    const handleSubscribe = async () => {
-        if (!user) {
-            router.push('/login');
-            return;
-        }
-        if (!channel) return;
-
-        setIsSubscribing(true);
-        try {
-            if (isSubscribed) {
-                await unsubscribe(channel.id);
-            } else {
-                await subscribe(channel.id);
-            }
-            // Ideally we revalidate or update local state
-            router.refresh();
-        } catch (error) {
-            console.error('Subscription toggle failed:', error);
-        } finally {
-            setIsSubscribing(false);
-        }
-    };
 
     return (
         <div className="flex flex-col gap-4">
@@ -90,20 +67,16 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                         <Link href={`/channel/${channel?.handle || '#'}`} className="font-bold text-base md:text-lg hover:text-primary transition-colors">
                             {channel?.name || video.user?.name}
                         </Link>
-                        <span className="text-xs text-muted-foreground">{channel?.subscriberCount ? `${(channel.subscriberCount / 1000).toFixed(1)}K` : '0'} subscribers</span>
+                        <span className="text-xs text-muted-foreground">{formatViews(channel?.subscriberCount || 0)} subscribers</span>
                     </div>
-                    <Button
-                        className={cn(
-                            "ml-4 rounded-full px-6 font-semibold transition-all",
-                            isSubscribed
-                                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                                : "bg-white text-black hover:bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-                        )}
-                        onClick={handleSubscribe}
-                        disabled={isSubscribing}
-                    >
-                        {isSubscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : isSubscribed ? 'Subscribed' : 'Subscribe'}
-                    </Button>
+                    <SubscribeButton
+                        channelId={channel?.id}
+                        channelName={channel?.name || video.user?.name}
+                        initialSubscribed={channel?.isSubscribed}
+                        initialNotify={channel?.notifyOnNewVideo}
+                        subscriberCount={channel?.subscriberCount}
+                        className="ml-4"
+                    />
                 </div>
 
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">

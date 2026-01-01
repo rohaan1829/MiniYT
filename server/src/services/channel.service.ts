@@ -72,16 +72,22 @@ export const getChannel = async (channelId: string, userId?: string) => {
     }
 
     let isSubscribed = false;
+    let notifyOnNewVideo = false;
+
     if (userId) {
         const sub = await (prisma as any).subscription.findUnique({
             where: {
                 userId_channelId: { userId, channelId },
             },
+            select: {
+                notifyOnNewVideo: true
+            }
         });
         isSubscribed = !!sub;
+        notifyOnNewVideo = sub?.notifyOnNewVideo || false;
     }
 
-    return { ...channel, isSubscribed };
+    return { ...channel, isSubscribed, notifyOnNewVideo };
 };
 
 export const getChannelByHandle = async (handle: string, userId?: string) => {
@@ -104,16 +110,22 @@ export const getChannelByHandle = async (handle: string, userId?: string) => {
     }
 
     let isSubscribed = false;
+    let notifyOnNewVideo = false;
+
     if (userId) {
         const sub = await (prisma as any).subscription.findUnique({
             where: {
                 userId_channelId: { userId, channelId: channel.id },
             },
+            select: {
+                notifyOnNewVideo: true
+            }
         });
         isSubscribed = !!sub;
+        notifyOnNewVideo = sub?.notifyOnNewVideo || false;
     }
 
-    return { ...channel, isSubscribed };
+    return { ...channel, isSubscribed, notifyOnNewVideo };
 };
 
 export const updateChannel = async (

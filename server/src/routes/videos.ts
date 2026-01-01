@@ -2,10 +2,11 @@ import { Router } from 'express';
 import { videoService } from '../services/video.service';
 import { storageProvider } from '../services/storage.service';
 import { videoQueue, VIDEO_JOBS } from '../config/queue';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuthenticate, AuthRequest } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import { z } from 'zod';
 import { logger } from '../utils/logger';
+import subscriptionService from '../services/subscription.service';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ const createVideoSchema = z.object({
 });
 
 // GET /api/videos - Get feed
-router.get('/', async (req, res, next) => {
+router.get('/', optionalAuthenticate, async (req: AuthRequest, res, next) => {
     try {
         const { category, userId, channelId, limit, offset } = req.query;
         const videos = await videoService.getVideos({
@@ -26,6 +27,29 @@ router.get('/', async (req, res, next) => {
             limit: limit ? parseInt(limit as string) : undefined,
             offset: offset ? parseInt(offset as string) : undefined,
         });
+
+        // Add subscription status if user is logged in
+        if (req.user) {
+            const enrichedVideos = await Promise.all(videos.map(async (v: any) => {
+                if (!v.user?.channel) return v;
+
+                const status = await subscriptionService.isSubscribed(req.user!.id, v.user.channel.id);
+                return {
+                    ...v,
+                    user: {
+                        ...v.user,
+                        channel: {
+                            ...v.user.channel,
+                            isSubscribed: status.subscribed,
+                            notifyOnNewVideo: status.notifyOnNewVideo || false
+                        }
+                    }
+                };
+            }));
+
+            return res.json({ success: true, data: enrichedVideos });
+        }
+
         return res.json({ success: true, data: videos });
     } catch (error) {
         return next(error);
@@ -33,7 +57,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // GET /api/videos/:id - Get single video
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', optionalAuthenticate, async (req: AuthRequest, res, next) => {
     try {
         const video = await videoService.getVideoById(req.params.id);
         if (!video) {
@@ -45,7 +69,29 @@ router.get('/:id', async (req, res, next) => {
             videoService.incrementViews(req.params.id).catch(err => logger.error('View increment error:', err));
         }
 
-        return res.json({ success: true, data: video });
+        // Add subscription status if user is logged in
+        let isSubscribed = false;
+        let notifyOnNewVideo = false;
+
+        if (req.user && video.user?.channel) {
+            const status = await subscriptionService.isSubscribed(req.user.id, video.user.channel.id);
+            isSubscribed = status.subscribed;
+            notifyOnNewVideo = status.notifyOnNewVideo || false;
+        }
+
+        const data = {
+            ...video,
+            user: {
+                ...video.user,
+                channel: video.user?.channel ? {
+                    ...video.user.channel,
+                    isSubscribed,
+                    notifyOnNewVideo
+                } : null
+            }
+        };
+
+        return res.json({ success: true, data });
     } catch (error) {
         return next(error);
     }
