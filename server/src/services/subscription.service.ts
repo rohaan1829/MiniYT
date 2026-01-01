@@ -1,6 +1,5 @@
 import prisma from '../config/database';
 import { NotFoundError, ConflictError } from '../utils/errors';
-import { notificationsService } from './notifications.service';
 
 export const subscriptionService = {
     /**
