@@ -14,10 +14,16 @@ import { useRouter } from 'next/navigation';
 import { formatViews, formatTimeAgo } from '@/lib/formatters';
 import { API_ROOT_URL } from '@/lib/api/client';
 import SubscribeButton from '@/components/channel/SubscribeButton';
+import { likesApi } from '@/lib/api/interactions';
+import { useToast } from '@/hooks/use-toast';
 
 export default function VideoPlayerSection({ video }: { video: any }) {
-    const { cinematicMode, addToHistory, addToLibrary, library, user } = useStore();
+    const { cinematicMode, addToHistory, addToLibrary, library, user, isAuthenticated } = useStore();
+    const { toast } = useToast();
     const [isDescExpanded, setIsDescExpanded] = useState(false);
+    const [isLiked, setIsLiked] = useState(video.isLiked || false);
+    const [likeCount, setLikeCount] = useState(video.likeCount || 0);
+    const [isLiking, setIsLiking] = useState(false);
     const router = useRouter();
 
     const inLibrary = library.some(v => v.id === video.id);
@@ -26,8 +32,47 @@ export default function VideoPlayerSection({ video }: { video: any }) {
     useEffect(() => {
         if (video) {
             addToHistory(video);
+            setIsLiked(video.isLiked || false);
+            setLikeCount(video.likeCount || 0);
         }
     }, [video, addToHistory]);
+
+    const handleLike = async () => {
+        if (!isAuthenticated) {
+            toast({
+                title: 'Sign in required',
+                description: 'Please sign in to like videos.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        setIsLiking(true);
+        // Optimistic update
+        const newLiked = !isLiked;
+        setIsLiked(newLiked);
+        setLikeCount((prev: number) => newLiked ? prev + 1 : Math.max(0, prev - 1));
+
+        try {
+            const response = await likesApi.toggleLike(video.id);
+            if (response.success) {
+                // Sync with server response just in case
+                setIsLiked(response.data.liked);
+                setLikeCount(response.data.likeCount);
+            }
+        } catch (error) {
+            // Revert on error
+            setIsLiked(!newLiked);
+            setLikeCount((prev: number) => !newLiked ? prev + 1 : Math.max(0, prev - 1));
+            toast({
+                title: 'Error',
+                description: 'Failed to update like. Please try again.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLiking(false);
+        }
+    };
 
 
     return (
@@ -81,11 +126,23 @@ export default function VideoPlayerSection({ video }: { video: any }) {
 
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                     <div className="flex items-center bg-secondary rounded-full">
-                        <Button variant="ghost" className="rounded-l-full px-4 border-r border-border/50 hover:bg-secondary-foreground/10 gap-2">
-                            <ThumbsUp className="w-5 h-5" />
-                            <span className="font-semibold">{formatViews(video.likes || 0)}</span>
+                        <Button
+                            variant="ghost"
+                            onClick={handleLike}
+                            disabled={isLiking}
+                            className={cn(
+                                "rounded-l-full px-4 border-r border-border/50 hover:bg-secondary-foreground/10 gap-2 transition-colors",
+                                isLiked && "text-primary"
+                            )}
+                        >
+                            <ThumbsUp className={cn("w-5 h-5", isLiked && "fill-primary")} />
+                            <span className="font-semibold">{formatViews(likeCount)}</span>
                         </Button>
-                        <Button variant="ghost" className="rounded-r-full px-4 hover:bg-secondary-foreground/10">
+                        <Button
+                            variant="ghost"
+                            disabled={isLiking}
+                            className="rounded-r-full px-4 hover:bg-secondary-foreground/10"
+                        >
                             <ThumbsDown className="w-5 h-5" />
                         </Button>
                     </div>

@@ -75,6 +75,11 @@ export const likesApi = {
     getLikeStatus: async (videoId: string): Promise<{ success: boolean; data: LikeStatus }> => {
         const response = await apiClient.get(`/videos/${videoId}/like`);
         return response.data;
+    },
+
+    getLikedVideos: async (limit: number = 50, offset: number = 0): Promise<{ success: boolean; data: any[] }> => {
+        const response = await apiClient.get('/videos/mine/liked', { params: { limit, offset } });
+        return response.data;
     }
 };
 

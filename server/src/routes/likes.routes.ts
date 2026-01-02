@@ -38,4 +38,23 @@ router.get('/:id/like', optionalAuthenticate, async (req, res, next) => {
     }
 });
 
+// GET /api/videos/mine/liked - Get videos liked by the current user
+router.get('/mine/liked', authenticate, async (req, res, next) => {
+    try {
+        const userId = req.user!.id;
+        const { limit = '50', offset = '0' } = req.query;
+
+        const videos = await likesService.getLikedVideos(
+            userId,
+            parseInt(limit as string),
+            parseInt(offset as string)
+        );
+
+        return res.json({ success: true, data: videos });
+    } catch (error) {
+        logger.error('Get liked videos error:', error);
+        return next(error);
+    }
+});
+
 export default router;

@@ -56,6 +56,8 @@ router.get('/', optionalAuthenticate, async (req: AuthRequest, res, next) => {
     }
 });
 
+import { likesService } from '../services/likes.service';
+
 // GET /api/videos/:id - Get single video
 router.get('/:id', optionalAuthenticate, async (req: AuthRequest, res, next) => {
     try {
@@ -72,15 +74,20 @@ router.get('/:id', optionalAuthenticate, async (req: AuthRequest, res, next) => 
         // Add subscription status if user is logged in
         let isSubscribed = false;
         let notifyOnNewVideo = false;
+        let isLiked = false;
 
-        if (req.user && video.user?.channel) {
-            const status = await subscriptionService.isSubscribed(req.user.id, video.user.channel.id);
-            isSubscribed = status.subscribed;
-            notifyOnNewVideo = status.notifyOnNewVideo || false;
+        if (req.user) {
+            if (video.user?.channel) {
+                const status = await subscriptionService.isSubscribed(req.user.id, video.user.channel.id);
+                isSubscribed = status.subscribed;
+                notifyOnNewVideo = status.notifyOnNewVideo || false;
+            }
+            isLiked = await likesService.getLikeStatus(video.id, req.user.id);
         }
 
         const data = {
             ...video,
+            isLiked,
             user: {
                 ...video.user,
                 channel: video.user?.channel ? {

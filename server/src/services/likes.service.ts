@@ -122,6 +122,41 @@ export class LikesService {
 
         return likes;
     }
+    /**
+     * Get videos liked by a user
+     */
+    async getLikedVideos(userId: string, limit: number = 50, offset: number = 0) {
+        const likedEntries = await prisma.videoLike.findMany({
+            where: { userId },
+            include: {
+                video: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                name: true,
+                                image: true,
+                                channel: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        handle: true,
+                                        avatarUrl: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            skip: offset
+        });
+
+        return likedEntries.map(entry => entry.video);
+    }
 }
 
 export const likesService = new LikesService();
