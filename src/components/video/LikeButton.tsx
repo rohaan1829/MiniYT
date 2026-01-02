@@ -25,7 +25,7 @@ export default function LikeButton({ videoId, className, showCount = true, size 
     useEffect(() => {
         const fetchStatus = async () => {
             try {
-                const response = await likesApi.getLikeStatus(videoId);
+                const response = await likesApi.getInteractionStatus(videoId);
                 if (response.success) {
                     setLiked(response.data.liked);
                     setLikeCount(response.data.likeCount);

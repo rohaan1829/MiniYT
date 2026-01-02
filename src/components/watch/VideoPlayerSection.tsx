@@ -23,7 +23,9 @@ export default function VideoPlayerSection({ video }: { video: any }) {
     const [isDescExpanded, setIsDescExpanded] = useState(false);
     const [isLiked, setIsLiked] = useState(video.isLiked || false);
     const [likeCount, setLikeCount] = useState(video.likeCount || 0);
-    const [isLiking, setIsLiking] = useState(false);
+    const [isDisliked, setIsDisliked] = useState(video.isDisliked || false);
+    const [dislikeCount, setDislikeCount] = useState(video.dislikeCount || 0);
+    const [isInteracting, setIsInteracting] = useState(false);
     const router = useRouter();
 
     const inLibrary = library.some(v => v.id === video.id);
@@ -34,6 +36,8 @@ export default function VideoPlayerSection({ video }: { video: any }) {
             addToHistory(video);
             setIsLiked(video.isLiked || false);
             setLikeCount(video.likeCount || 0);
+            setIsDisliked(video.isDisliked || false);
+            setDislikeCount(video.dislikeCount || 0);
         }
     }, [video, addToHistory]);
 
@@ -47,30 +51,76 @@ export default function VideoPlayerSection({ video }: { video: any }) {
             return;
         }
 
-        setIsLiking(true);
+        setIsInteracting(true);
         // Optimistic update
         const newLiked = !isLiked;
+        const wasDisliked = isDisliked;
+
         setIsLiked(newLiked);
         setLikeCount((prev: number) => newLiked ? prev + 1 : Math.max(0, prev - 1));
+        if (newLiked && wasDisliked) {
+            setIsDisliked(false);
+            setDislikeCount((prev: number) => Math.max(0, prev - 1));
+        }
 
         try {
             const response = await likesApi.toggleLike(video.id);
             if (response.success) {
-                // Sync with server response just in case
                 setIsLiked(response.data.liked);
                 setLikeCount(response.data.likeCount);
+                setIsDisliked(response.data.disliked);
+                setDislikeCount(response.data.dislikeCount);
             }
         } catch (error) {
-            // Revert on error
-            setIsLiked(!newLiked);
-            setLikeCount((prev: number) => !newLiked ? prev + 1 : Math.max(0, prev - 1));
+            // Revert is complex, just sync back
             toast({
                 title: 'Error',
-                description: 'Failed to update like. Please try again.',
+                description: 'Failed to update like.',
                 variant: 'destructive',
             });
         } finally {
-            setIsLiking(false);
+            setIsInteracting(false);
+        }
+    };
+
+    const handleDislike = async () => {
+        if (!isAuthenticated) {
+            toast({
+                title: 'Sign in required',
+                description: 'Please sign in to dislike videos.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        setIsInteracting(true);
+        // Optimistic update
+        const newDisliked = !isDisliked;
+        const wasLiked = isLiked;
+
+        setIsDisliked(newDisliked);
+        setDislikeCount((prev: number) => newDisliked ? prev + 1 : Math.max(0, prev - 1));
+        if (newDisliked && wasLiked) {
+            setIsLiked(false);
+            setLikeCount((prev: number) => Math.max(0, prev - 1));
+        }
+
+        try {
+            const response = await likesApi.toggleDislike(video.id);
+            if (response.success) {
+                setIsLiked(response.data.liked);
+                setLikeCount(response.data.likeCount);
+                setIsDisliked(response.data.disliked);
+                setDislikeCount(response.data.dislikeCount);
+            }
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Failed to update dislike.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsInteracting(false);
         }
     };
 
@@ -129,7 +179,7 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                         <Button
                             variant="ghost"
                             onClick={handleLike}
-                            disabled={isLiking}
+                            disabled={isInteracting}
                             className={cn(
                                 "rounded-l-full px-4 border-r border-border/50 hover:bg-secondary-foreground/10 gap-2 transition-colors",
                                 isLiked && "text-primary"
@@ -140,10 +190,15 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                         </Button>
                         <Button
                             variant="ghost"
-                            disabled={isLiking}
-                            className="rounded-r-full px-4 hover:bg-secondary-foreground/10"
+                            onClick={handleDislike}
+                            disabled={isInteracting}
+                            className={cn(
+                                "rounded-r-full px-4 hover:bg-secondary-foreground/10 gap-2 transition-colors",
+                                isDisliked && "text-primary"
+                            )}
                         >
-                            <ThumbsDown className="w-5 h-5" />
+                            <ThumbsDown className={cn("w-5 h-5", isDisliked && "fill-primary")} />
+                            {dislikeCount > 0 && <span className="font-semibold ml-2">{formatViews(dislikeCount)}</span>}
                         </Button>
                     </div>
 

@@ -35,6 +35,7 @@ model User {
   postComments  PostComment[]
   postLikes     PostLike[]
   videoLikes    VideoLike[]
+  videoDislikes VideoDislike[]
   notifications Notification[]
 
   @@map("users")
@@ -94,6 +95,8 @@ model Video {
   viewSnapshots      ViewSnapshot[]
   likes              VideoLike[]
   likeCount          Int             @default(0)
+  dislikes           VideoDislike[]
+  dislikeCount       Int             @default(0)
 
   @@index([trendingScore, category])
   @@index([publishedAt])
@@ -292,6 +295,20 @@ model VideoLike {
   @@index([videoId])
   @@index([userId])
   @@map("video_likes")
+}
+
+model VideoDislike {
+  id        String   @id @default(cuid())
+  videoId   String
+  userId    String
+  createdAt DateTime @default(now())
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, userId])
+  @@index([videoId])
+  @@index([userId])
+  @@map("video_dislikes")
 }
 
 model Notification {

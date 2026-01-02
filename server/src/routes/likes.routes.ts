@@ -19,21 +19,34 @@ router.post('/:id/like', authenticate, async (req, res, next) => {
     }
 });
 
-// GET /api/videos/:id/like - Get like status
-router.get('/:id/like', optionalAuthenticate, async (req, res, next) => {
+// POST /api/videos/:id/dislike - Toggle dislike (requires auth)
+router.post('/:id/dislike', authenticate, async (req, res, next) => {
+    try {
+        const videoId = req.params.id;
+        const userId = req.user!.id;
+
+        const result = await likesService.toggleDislike(videoId, userId);
+        return res.json({ success: true, data: result });
+    } catch (error) {
+        logger.error('Toggle dislike error:', error);
+        return next(error);
+    }
+});
+
+// GET /api/videos/:id/interaction - Get interaction status (like/dislike)
+router.get('/:id/interaction', optionalAuthenticate, async (req, res, next) => {
     try {
         const videoId = req.params.id;
         const userId = req.user?.id;
 
-        const likeCount = await likesService.getLikeCount(videoId);
-        const liked = userId ? await likesService.getLikeStatus(videoId, userId) : false;
+        const result = await likesService.getInteractionStatus(videoId, userId);
 
         return res.json({
             success: true,
-            data: { liked, likeCount }
+            data: result
         });
     } catch (error) {
-        logger.error('Get like status error:', error);
+        logger.error('Get interaction status error:', error);
         return next(error);
     }
 });

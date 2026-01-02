@@ -1,58 +1,132 @@
 import prisma from '../config/database';
 
-interface LikeResult {
+interface InteractionResult {
     liked: boolean;
+    disliked: boolean;
     likeCount: number;
+    dislikeCount: number;
 }
 
 export class LikesService {
     /**
-     * Toggle like on a video - if liked, unlike; if not liked, like
+     * Toggle like on a video - if disliked, removes dislike first
      */
-    async toggleLike(videoId: string, userId: string): Promise<LikeResult> {
+    async toggleLike(videoId: string, userId: string): Promise<InteractionResult> {
         const existingLike = await prisma.videoLike.findUnique({
-            where: {
-                videoId_userId: { videoId, userId }
-            }
+            where: { videoId_userId: { videoId, userId } }
+        });
+
+        const existingDislike = await prisma.videoDislike.findUnique({
+            where: { videoId_userId: { videoId, userId } }
         });
 
         if (existingLike) {
-            // Unlike: delete the like and decrement count
+            // Unlike
             await prisma.$transaction([
-                prisma.videoLike.delete({
-                    where: { id: existingLike.id }
-                }),
+                prisma.videoLike.delete({ where: { id: existingLike.id } }),
                 prisma.video.update({
                     where: { id: videoId },
                     data: { likeCount: { decrement: 1 } }
                 })
             ]);
-
-            const video = await prisma.video.findUnique({
-                where: { id: videoId },
-                select: { likeCount: true }
-            });
-
-            return { liked: false, likeCount: video?.likeCount || 0 };
         } else {
-            // Like: create the like and increment count
-            await prisma.$transaction([
-                prisma.videoLike.create({
-                    data: { videoId, userId }
-                }),
+            // Like
+            const updates: any[] = [
+                prisma.videoLike.create({ data: { videoId, userId } }),
                 prisma.video.update({
                     where: { id: videoId },
                     data: { likeCount: { increment: 1 } }
                 })
-            ]);
+            ];
 
-            const video = await prisma.video.findUnique({
-                where: { id: videoId },
-                select: { likeCount: true }
-            });
+            // Remove dislike if it exists
+            if (existingDislike) {
+                updates.push(prisma.videoDislike.delete({ where: { id: existingDislike.id } }));
+                updates.push(prisma.video.update({
+                    where: { id: videoId },
+                    data: { dislikeCount: { decrement: 1 } }
+                }));
+            }
 
-            return { liked: true, likeCount: video?.likeCount || 0 };
+            await prisma.$transaction(updates);
         }
+
+        return this.getInteractionStatus(videoId, userId);
+    }
+
+    /**
+     * Toggle dislike on a video - if liked, removes like first
+     */
+    async toggleDislike(videoId: string, userId: string): Promise<InteractionResult> {
+        const existingLike = await prisma.videoLike.findUnique({
+            where: { videoId_userId: { videoId, userId } }
+        });
+
+        const existingDislike = await prisma.videoDislike.findUnique({
+            where: { videoId_userId: { videoId, userId } }
+        });
+
+        if (existingDislike) {
+            // Un-dislike
+            await prisma.$transaction([
+                prisma.videoDislike.delete({ where: { id: existingDislike.id } }),
+                prisma.video.update({
+                    where: { id: videoId },
+                    data: { dislikeCount: { decrement: 1 } }
+                })
+            ]);
+        } else {
+            // Dislike
+            const updates: any[] = [
+                prisma.videoDislike.create({ data: { videoId, userId } }),
+                prisma.video.update({
+                    where: { id: videoId },
+                    data: { dislikeCount: { increment: 1 } }
+                })
+            ];
+
+            // Remove like if it exists
+            if (existingLike) {
+                updates.push(prisma.videoLike.delete({ where: { id: existingLike.id } }));
+                updates.push(prisma.video.update({
+                    where: { id: videoId },
+                    data: { likeCount: { decrement: 1 } }
+                }));
+            }
+
+            await prisma.$transaction(updates);
+        }
+
+        return this.getInteractionStatus(videoId, userId);
+    }
+
+    /**
+     * Get full interaction status for a video
+     */
+    async getInteractionStatus(videoId: string, userId?: string): Promise<InteractionResult> {
+        const video = await prisma.video.findUnique({
+            where: { id: videoId },
+            select: { likeCount: true, dislikeCount: true }
+        });
+
+        let liked = false;
+        let disliked = false;
+
+        if (userId) {
+            const [like, dislike] = await Promise.all([
+                prisma.videoLike.findUnique({ where: { videoId_userId: { videoId, userId } } }),
+                prisma.videoDislike.findUnique({ where: { videoId_userId: { videoId, userId } } })
+            ]);
+            liked = !!like;
+            disliked = !!dislike;
+        }
+
+        return {
+            liked,
+            disliked,
+            likeCount: video?.likeCount || 0,
+            dislikeCount: video?.dislikeCount || 0
+        };
     }
 
     /**
@@ -60,9 +134,7 @@ export class LikesService {
      */
     async getLikeStatus(videoId: string, userId: string): Promise<boolean> {
         const like = await prisma.videoLike.findUnique({
-            where: {
-                videoId_userId: { videoId, userId }
-            }
+            where: { videoId_userId: { videoId, userId } }
         });
         return !!like;
     }

@@ -2,7 +2,9 @@ import { apiClient } from './client';
 
 export interface LikeStatus {
     liked: boolean;
+    disliked: boolean;
     likeCount: number;
+    dislikeCount: number;
 }
 
 export interface InboxMessage {
@@ -72,8 +74,13 @@ export const likesApi = {
         return response.data;
     },
 
-    getLikeStatus: async (videoId: string): Promise<{ success: boolean; data: LikeStatus }> => {
-        const response = await apiClient.get(`/videos/${videoId}/like`);
+    async toggleDislike(videoId: string): Promise<{ success: boolean; data: LikeStatus }> {
+        const response = await apiClient.post(`/videos/${videoId}/dislike`);
+        return response.data;
+    },
+
+    getInteractionStatus: async (videoId: string): Promise<{ success: boolean; data: LikeStatus }> => {
+        const response = await apiClient.get(`/videos/${videoId}/interaction`);
         return response.data;
     },
 

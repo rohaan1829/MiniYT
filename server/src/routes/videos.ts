@@ -71,23 +71,24 @@ router.get('/:id', optionalAuthenticate, async (req: AuthRequest, res, next) => 
             videoService.incrementViews(req.params.id).catch(err => logger.error('View increment error:', err));
         }
 
-        // Add subscription status if user is logged in
+        // Add interaction status if user is logged in
         let isSubscribed = false;
         let notifyOnNewVideo = false;
-        let isLiked = false;
 
-        if (req.user) {
-            if (video.user?.channel) {
-                const status = await subscriptionService.isSubscribed(req.user.id, video.user.channel.id);
-                isSubscribed = status.subscribed;
-                notifyOnNewVideo = status.notifyOnNewVideo || false;
-            }
-            isLiked = await likesService.getLikeStatus(video.id, req.user.id);
+        const interaction = await likesService.getInteractionStatus(video.id, req.user?.id);
+
+        if (req.user && video.user?.channel) {
+            const status = await subscriptionService.isSubscribed(req.user.id, video.user.channel.id);
+            isSubscribed = status.subscribed;
+            notifyOnNewVideo = status.notifyOnNewVideo || false;
         }
 
         const data = {
             ...video,
-            isLiked,
+            likeCount: interaction.likeCount,
+            dislikeCount: interaction.dislikeCount,
+            isLiked: interaction.liked,
+            isDisliked: interaction.disliked,
             user: {
                 ...video.user,
                 channel: video.user?.channel ? {
