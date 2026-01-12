@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Card } from '@/components/ui/card';
-import { Play, ThumbsUp, Eye } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Play, Eye, ThumbsUp, Clock, Share2, Bookmark } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { formatViews, formatDuration } from '@/lib/formatters';
 
@@ -34,46 +34,80 @@ export default function FeedVideoCard({ video }: FeedVideoCardProps) {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
     const channelName = video.user?.channel?.name || video.user?.name || 'Unknown';
     const channelHandle = video.user?.channel?.handle;
+    const channelAvatar = video.user?.channel?.avatarUrl;
 
     return (
-        <Card className="bg-card/50 border-border/50 overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-            <div className="p-5 md:p-6">
-                {/* Header - Badge */}
-                <div className="flex items-center justify-between mb-4">
-                    <span className="px-3 py-1 text-xs font-semibold rounded-full border bg-blue-500/20 text-blue-400 border-blue-500/30">
-                        New Video
-                    </span>
+        <div className="bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 hover:border-white/20">
+            {/* Decorative top gradient bar */}
+            <div className="h-1 w-full bg-gradient-to-r from-blue-500 to-cyan-500" />
+
+            <div className="p-6 md:p-8">
+                {/* Header - Creator info and badge */}
+                <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-4">
+                        {/* Avatar */}
+                        <Link href={channelHandle ? `/channel/${channelHandle}` : '#'}>
+                            <Avatar className="h-12 w-12 ring-2 ring-white/10 hover:ring-blue-500/50 transition-all">
+                                <AvatarImage src={channelAvatar ? (channelAvatar.startsWith('http') ? channelAvatar : `${backendUrl}${channelAvatar}`) : undefined} />
+                                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold">
+                                    {channelName[0]?.toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                        </Link>
+
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <Link href={channelHandle ? `/channel/${channelHandle}` : '#'} className="font-bold text-foreground hover:text-primary transition-colors">
+                                    {channelName}
+                                </Link>
+                                <span className="px-3 py-1 text-[11px] font-bold rounded-full border bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-blue-300 border-blue-500/40">
+                                    New Video
+                                </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                {formatDistanceToNow(new Date(video.createdAt))} ago
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Video Thumbnail with Play Overlay */}
-                <Link href={`/watch/${video.id}`} className="block mb-4">
-                    <div className="relative rounded-xl overflow-hidden bg-black/30 aspect-video group cursor-pointer">
+                <Link href={`/watch/${video.id}`} className="block mb-5">
+                    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-black/50 aspect-video group cursor-pointer ring-1 ring-white/10">
                         {video.thumbnailUrl ? (
                             <img
                                 src={video.thumbnailUrl.startsWith('http') ? video.thumbnailUrl : `${backendUrl}${video.thumbnailUrl}`}
                                 alt={video.title}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                         ) : (
-                            <div className="w-full h-full bg-secondary/50 flex items-center justify-center">
-                                <Play className="h-12 w-12 text-muted-foreground" />
+                            <div className="w-full h-full bg-gradient-to-br from-blue-900/50 to-cyan-900/50 flex items-center justify-center">
+                                <Play className="h-16 w-16 text-white/30" />
                             </div>
                         )}
 
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
                         {/* Duration badge */}
                         {video.duration && video.duration > 0 && (
-                            <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 text-white text-xs font-medium rounded">
+                            <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-black/90 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 backdrop-blur-sm">
+                                <Clock className="h-3 w-3" />
                                 {formatDuration(video.duration)}
                             </div>
                         )}
 
                         {/* Play overlay */}
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3 transition-all group-hover:bg-black/40">
-                            <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <Play className="h-7 w-7 text-black fill-black ml-1" />
+                        <div className="absolute inset-0 flex items-center justify-center transition-all">
+                            <div className="w-18 h-18 rounded-full bg-white/95 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300 ring-4 ring-white/20 p-5">
+                                <Play className="h-10 w-10 text-black fill-black ml-1" />
                             </div>
-                            <span className="text-white font-semibold text-lg drop-shadow-lg">
-                                Watch on MiniYT
+                        </div>
+
+                        {/* Bottom info bar */}
+                        <div className="absolute bottom-3 left-3 flex items-center gap-3">
+                            <span className="px-3 py-1.5 bg-blue-500/90 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
+                                Watch Now
                             </span>
                         </div>
                     </div>
@@ -81,38 +115,43 @@ export default function FeedVideoCard({ video }: FeedVideoCardProps) {
 
                 {/* Video Title */}
                 <Link href={`/watch/${video.id}`}>
-                    <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 hover:text-primary transition-colors">
+                    <h3 className="text-xl font-bold text-foreground mb-3 line-clamp-2 hover:text-primary transition-colors">
                         {video.title}
                     </h3>
                 </Link>
 
-                {/* Channel Name */}
-                {channelHandle && (
-                    <Link href={`/channel/${channelHandle}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                        {channelName}
-                    </Link>
+                {/* Video Description if available */}
+                {video.description && (
+                    <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
+                        {video.description}
+                    </p>
                 )}
 
-                {/* Footer - Timestamp and Stats */}
-                <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/50">
-                    <span className="text-sm text-muted-foreground">
-                        Posted {formatDistanceToNow(new Date(video.createdAt))} ago
-                    </span>
-
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
+                {/* Stats and Actions */}
+                <div className="flex items-center justify-between pt-5 border-t border-white/10">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 text-muted-foreground">
                             <Eye className="h-4 w-4" />
-                            {formatViews(video.views)}
-                        </span>
+                            <span className="font-medium text-sm">{formatViews(video.views)} views</span>
+                        </div>
                         {video.likeCount !== undefined && video.likeCount > 0 && (
-                            <span className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 text-muted-foreground">
                                 <ThumbsUp className="h-4 w-4" />
-                                {formatViews(video.likeCount)}
-                            </span>
+                                <span className="font-medium text-sm">{formatViews(video.likeCount)}</span>
+                            </div>
                         )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        <button className="p-2.5 rounded-xl bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground transition-all">
+                            <Share2 className="h-4 w-4" />
+                        </button>
+                        <button className="p-2.5 rounded-xl bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground transition-all">
+                            <Bookmark className="h-4 w-4" />
+                        </button>
                     </div>
                 </div>
             </div>
-        </Card>
+        </div>
     );
 }

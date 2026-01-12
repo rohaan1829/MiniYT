@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Post, postsApi } from '@/lib/api/posts';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ThumbsUp, MessageSquare, MoreVertical, Trash2, Play } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThumbsUp, MessageSquare, MoreVertical, Trash2, Play, Share2, Bookmark } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useStore } from '@/store/useStore';
 import Link from 'next/link';
@@ -25,15 +25,18 @@ interface PostCardProps {
 const POST_TYPE_CONFIG = {
     TEXT: {
         label: 'Announcement',
-        className: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+        className: 'bg-gradient-to-r from-pink-500/30 to-rose-500/30 text-pink-300 border-pink-500/40',
+        iconBg: 'bg-gradient-to-br from-pink-500 to-rose-500',
     },
     VIDEO: {
         label: 'New Video',
-        className: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+        className: 'bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-blue-300 border-blue-500/40',
+        iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
     },
     IMAGE: {
         label: 'Update',
-        className: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+        className: 'bg-gradient-to-r from-orange-500/30 to-amber-500/30 text-orange-300 border-orange-500/40',
+        iconBg: 'bg-gradient-to-br from-orange-500 to-amber-500',
     },
 };
 
@@ -48,6 +51,9 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
     const isOwner = user && user.id === post.userId;
     const typeConfig = POST_TYPE_CONFIG[post.type];
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+    const channelName = post.user?.channel?.name || post.user?.name || 'Unknown';
+    const channelHandle = post.user?.channel?.handle;
+    const channelAvatar = post.user?.channel?.avatarUrl || post.user?.image;
 
     const handleLike = async () => {
         if (!user) return;
@@ -83,7 +89,7 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
     const renderMedia = () => {
         if (post.type === 'IMAGE' && post.mediaUrl) {
             return (
-                <div className="rounded-xl overflow-hidden bg-black/20">
+                <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-secondary/30 ring-1 ring-white/10">
                     <img
                         src={`${backendUrl}${post.mediaUrl}`}
                         alt="Post media"
@@ -95,13 +101,12 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
         if (post.type === 'VIDEO' && post.mediaUrl) {
             return (
                 <Link href={`/watch/${post.id}`} className="block">
-                    <div className="relative rounded-xl overflow-hidden bg-black/30 aspect-video group cursor-pointer">
-                        {/* Thumbnail or video poster */}
+                    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-black/50 aspect-video group cursor-pointer ring-1 ring-white/10">
                         {post.thumbnailUrl ? (
                             <img
                                 src={`${backendUrl}${post.thumbnailUrl}`}
                                 alt="Video thumbnail"
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                         ) : (
                             <video
@@ -111,12 +116,19 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
                             />
                         )}
 
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
                         {/* Play overlay */}
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-3 transition-all group-hover:bg-black/40">
-                            <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <Play className="h-6 w-6 text-black fill-black ml-1" />
+                        <div className="absolute inset-0 flex items-center justify-center gap-3 transition-all">
+                            <div className="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300 ring-4 ring-white/20">
+                                <Play className="h-8 w-8 text-black fill-black ml-1" />
                             </div>
-                            <span className="text-white font-semibold text-lg drop-shadow-lg">
+                        </div>
+
+                        {/* Bottom text */}
+                        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                            <span className="text-white font-bold text-lg drop-shadow-lg">
                                 Watch on MiniYT
                             </span>
                         </div>
@@ -128,21 +140,46 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
     };
 
     return (
-        <Card className="bg-card/50 border-border/50 overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-            <div className="p-5 md:p-6">
-                {/* Header - Badge and Menu */}
-                <div className="flex items-center justify-between mb-4">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${typeConfig.className}`}>
-                        {typeConfig.label}
-                    </span>
+        <div className="bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl hover:shadow-primary/5 transition-all duration-300 hover:border-white/20">
+            {/* Decorative top gradient bar */}
+            <div className={`h-1 w-full ${typeConfig.iconBg}`} />
+
+            <div className="p-6 md:p-8">
+                {/* Header - Creator info and badge */}
+                <div className="flex items-start justify-between mb-5">
+                    <div className="flex items-center gap-4">
+                        {/* Avatar */}
+                        <Link href={channelHandle ? `/channel/${channelHandle}` : '#'}>
+                            <Avatar className="h-12 w-12 ring-2 ring-white/10 hover:ring-primary/50 transition-all">
+                                <AvatarImage src={channelAvatar ? (channelAvatar.startsWith('http') ? channelAvatar : `${backendUrl}${channelAvatar}`) : undefined} />
+                                <AvatarFallback className={`${typeConfig.iconBg} text-white font-bold`}>
+                                    {channelName[0]?.toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                        </Link>
+
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <Link href={channelHandle ? `/channel/${channelHandle}` : '#'} className="font-bold text-foreground hover:text-primary transition-colors">
+                                    {channelName}
+                                </Link>
+                                <span className={`px-3 py-1 text-[11px] font-bold rounded-full border ${typeConfig.className}`}>
+                                    {typeConfig.label}
+                                </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                {formatDistanceToNow(new Date(post.createdAt))} ago
+                            </p>
+                        </div>
+                    </div>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-secondary">
-                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/10">
+                                <MoreVertical className="h-5 w-5 text-muted-foreground" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover border-border">
+                        <DropdownMenuContent align="end" className="bg-popover/95 backdrop-blur-xl border-white/10">
                             {isOwner ? (
                                 <DropdownMenuItem
                                     onClick={handleDelete}
@@ -161,57 +198,64 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
                     </DropdownMenu>
                 </div>
 
-                {/* Media first if it's a video/image post */}
-                {(post.type === 'VIDEO' || post.type === 'IMAGE') && post.mediaUrl && (
-                    <div className="mb-4">
-                        {renderMedia()}
-                    </div>
-                )}
-
                 {/* Content */}
                 {post.content && (
-                    <p className="text-foreground whitespace-pre-wrap leading-relaxed text-base mb-4">
+                    <p className="text-foreground/90 whitespace-pre-wrap leading-relaxed text-[15px] mb-5">
                         {post.content}
                     </p>
                 )}
 
-                {/* Footer - Timestamp left, Actions right */}
-                <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                    <span className="text-sm text-muted-foreground">
-                        Posted {formatDistanceToNow(new Date(post.createdAt))} ago
-                    </span>
+                {/* Media */}
+                {(post.type === 'VIDEO' || post.type === 'IMAGE') && post.mediaUrl && (
+                    <div className="mb-5">
+                        {renderMedia()}
+                    </div>
+                )}
 
-                    <div className="flex items-center gap-4">
+                {/* Action buttons */}
+                <div className="flex items-center justify-between pt-5 border-t border-white/10">
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={handleLike}
                             disabled={isLiking}
-                            className={`flex items-center gap-1.5 text-sm font-medium transition-all hover:scale-105 ${liked ? 'text-pink-500' : 'text-pink-400 hover:text-pink-500'
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${liked
+                                    ? 'bg-pink-500/20 text-pink-400'
+                                    : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
                                 }`}
                         >
                             <ThumbsUp className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-                            <span>Like</span>
-                            {likesCount > 0 && <span className="text-muted-foreground">({likesCount})</span>}
+                            <span>{likesCount > 0 ? likesCount : 'Like'}</span>
                         </button>
 
                         <button
                             onClick={() => setShowComments(!showComments)}
-                            className={`flex items-center gap-1.5 text-sm font-medium transition-all hover:scale-105 ${showComments ? 'text-pink-500' : 'text-pink-400 hover:text-pink-500'
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${showComments
+                                    ? 'bg-blue-500/20 text-blue-400'
+                                    : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
                                 }`}
                         >
                             <MessageSquare className="h-4 w-4" />
-                            <span>Comment</span>
-                            {post._count.comments > 0 && <span className="text-muted-foreground">({post._count.comments})</span>}
+                            <span>{post._count.comments > 0 ? post._count.comments : 'Comment'}</span>
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        <button className="p-2.5 rounded-xl bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground transition-all">
+                            <Share2 className="h-4 w-4" />
+                        </button>
+                        <button className="p-2.5 rounded-xl bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground transition-all">
+                            <Bookmark className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
 
                 {/* Comments Section */}
                 {showComments && (
-                    <div className="mt-4 pt-4 border-t border-border/50">
+                    <div className="mt-5 pt-5 border-t border-white/10">
                         <PostComments postId={post.id} />
                     </div>
                 )}
             </div>
-        </Card>
+        </div>
     );
 }

@@ -19,7 +19,15 @@ export interface Post {
         channel?: {
             id: string;
             handle: string;
+            name: string;
+            avatarUrl?: string;
         };
+    };
+    channel?: {
+        id: string;
+        handle: string;
+        name: string;
+        avatarUrl?: string;
     };
     _count: {
         comments: number;
