@@ -3,11 +3,40 @@
 import { useState, useEffect } from 'react';
 import { Post, postsApi } from '@/lib/api/posts';
 import PostCard from '@/components/posts/PostCard';
+import FeedVideoCard from './FeedVideoCard';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Newspaper } from 'lucide-react';
 
+// Feed item can be a post or a video
+interface FeedItem {
+    id: string;
+    createdAt: string;
+    updatedAt?: string;
+    feedType: 'post' | 'video';
+    // Post fields
+    type?: 'TEXT' | 'IMAGE' | 'VIDEO';
+    content?: string;
+    mediaUrl?: string;
+    thumbnailUrl?: string;
+    visibility?: string;
+    likes?: number;
+    userId?: string;
+    channelId?: string;
+    user?: any;
+    channel?: any;
+    _count?: { comments: number; likedBy: number };
+    // Video fields
+    title?: string;
+    description?: string;
+    videoUrl?: string;
+    views?: number;
+    duration?: number;
+    likeCount?: number;
+    status?: string;
+}
+
 export default function HomeFeed() {
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +46,7 @@ export default function HomeFeed() {
             setError(null);
             const response = await postsApi.getFeed({ limit: 30 });
             if (response.success) {
-                setPosts(response.data);
+                setFeedItems(response.data);
             }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to load feed');
@@ -31,10 +60,10 @@ export default function HomeFeed() {
     }, []);
 
     const handlePostDeleted = (postId: string) => {
-        setPosts(posts.filter(p => p.id !== postId));
+        setFeedItems(feedItems.filter(item => item.id !== postId));
     };
 
-    if (loading && posts.length === 0) {
+    if (loading && feedItems.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -55,13 +84,13 @@ export default function HomeFeed() {
         );
     }
 
-    if (posts.length === 0) {
+    if (feedItems.length === 0) {
         return (
             <div className="text-center py-20 text-muted-foreground bg-secondary/10 rounded-2xl border border-dashed border-white/10">
                 <Newspaper className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                <p className="text-2xl font-bold mb-2">No posts yet</p>
+                <p className="text-2xl font-bold mb-2">No content yet</p>
                 <p className="text-sm max-w-md mx-auto">
-                    When creators share updates, they&apos;ll appear here. Subscribe to your favorite channels to stay updated!
+                    When creators share videos and updates, they&apos;ll appear here. Subscribe to your favorite channels to stay updated!
                 </p>
             </div>
         );
@@ -69,13 +98,36 @@ export default function HomeFeed() {
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            {posts.map((post) => (
-                <PostCard
-                    key={post.id}
-                    post={post}
-                    onDeleted={handlePostDeleted}
-                />
-            ))}
+            {feedItems.map((item) => {
+                if (item.feedType === 'video') {
+                    return (
+                        <FeedVideoCard
+                            key={`video-${item.id}`}
+                            video={{
+                                id: item.id,
+                                title: item.title || 'Untitled Video',
+                                description: item.description,
+                                thumbnailUrl: item.thumbnailUrl,
+                                videoUrl: item.videoUrl,
+                                views: item.views || 0,
+                                duration: item.duration,
+                                likeCount: item.likeCount,
+                                createdAt: item.createdAt,
+                                user: item.user,
+                            }}
+                        />
+                    );
+                }
+
+                // It's a post
+                return (
+                    <PostCard
+                        key={`post-${item.id}`}
+                        post={item as Post}
+                        onDeleted={handlePostDeleted}
+                    />
+                );
+            })}
         </div>
     );
 }

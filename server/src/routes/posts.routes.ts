@@ -19,15 +19,15 @@ const updatePostSchema = z.object({
     visibility: z.nativeEnum(PostVisibility).optional(),
 });
 
-// GET /api/posts/feed - Get feed of all public posts for homepage
+// GET /api/posts/feed - Get unified feed of posts and videos for homepage
 router.get('/feed', async (req, res, next) => {
     try {
         const { limit, offset } = req.query;
-        const posts = await postService.getFeed(
+        const feed = await postService.getUnifiedFeed(
             limit ? parseInt(limit as string) : undefined,
             offset ? parseInt(offset as string) : undefined
         );
-        return res.json({ success: true, data: posts });
+        return res.json({ success: true, data: feed });
     } catch (error) {
         return next(error);
     }

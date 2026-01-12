@@ -31,9 +31,9 @@ export class PostService {
         });
     }
 
-    async getFeed(limit = 20, offset = 0) {
-        // Get all PUBLIC posts from all channels for the homepage feed
-        return await prisma.post.findMany({
+    async getUnifiedFeed(limit = 30, offset = 0) {
+        // Fetch all PUBLIC posts
+        const posts = await prisma.post.findMany({
             where: {
                 visibility: 'PUBLIC',
             },
@@ -54,9 +54,35 @@ export class PostService {
             orderBy: {
                 createdAt: 'desc',
             },
-            take: limit,
-            skip: offset,
         });
+
+        // Fetch all ready videos
+        const videos = await prisma.video.findMany({
+            where: {
+                status: 'ready',
+            },
+            include: {
+                user: {
+                    include: {
+                        channel: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
+        // Merge with feedType discriminator
+        const feed = [
+            ...posts.map(p => ({ ...p, feedType: 'post' as const })),
+            ...videos.map(v => ({ ...v, feedType: 'video' as const })),
+        ];
+
+        // Sort by createdAt descending and apply pagination
+        return feed
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(offset, offset + limit);
     }
 
     async getChannelPosts(channelId: string, limit = 20, offset = 0) {
