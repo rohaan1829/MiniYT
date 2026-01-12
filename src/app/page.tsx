@@ -3,12 +3,12 @@
 import { useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
-import VideoGrid from '@/components/video/VideoGrid';
+import HomeFeed from '@/components/home/HomeFeed';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
-  const { user, sidebarOpen, toggleSidebar } = useStore();
+  const { sidebarOpen } = useStore();
 
   // Ensure dock is hidden on home
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative selection:bg-primary selection:text-white pb-32">
-      {/* Ambient Glow Background - Keeping this as user didn't dislike it */}
+      {/* Ambient Glow Background */}
       <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[120px] rounded-full pointer-events-none opacity-20" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none opacity-20" />
 
@@ -33,13 +33,14 @@ export default function Home() {
       >
         <div>
           {/* Section Title */}
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-primary rounded-full inline-block"></span>
-            Recommended for You
+            Your Feed
           </h2>
-          <VideoGrid />
+          <HomeFeed />
         </div>
       </main>
     </div>
   );
 }
+

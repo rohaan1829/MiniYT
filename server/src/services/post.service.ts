@@ -31,6 +31,34 @@ export class PostService {
         });
     }
 
+    async getFeed(limit = 20, offset = 0) {
+        // Get all PUBLIC posts from all channels for the homepage feed
+        return await prisma.post.findMany({
+            where: {
+                visibility: 'PUBLIC',
+            },
+            include: {
+                user: {
+                    include: {
+                        channel: true,
+                    },
+                },
+                channel: true,
+                _count: {
+                    select: {
+                        comments: true,
+                        likedBy: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+            take: limit,
+            skip: offset,
+        });
+    }
+
     async getChannelPosts(channelId: string, limit = 20, offset = 0) {
         // Query to get posts
         const posts = await prisma.post.findMany({

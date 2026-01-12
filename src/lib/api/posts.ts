@@ -43,6 +43,12 @@ export interface PostComment {
 }
 
 export const postsApi = {
+    // Get feed of all public posts for homepage
+    getFeed: async (params?: { limit?: number; offset?: number }) => {
+        const response = await apiClient.get('/posts/feed', { params });
+        return response.data;
+    },
+
     // Get channel posts
     getChannelPosts: async (channelId: string, params?: { limit?: number; offset?: number }) => {
         const response = await apiClient.get(`/posts/channel/${channelId}`, { params });
