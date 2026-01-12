@@ -56,14 +56,9 @@ export default function FeedVideoCard({ video }: FeedVideoCardProps) {
                         </Link>
 
                         <div>
-                            <div className="flex items-center gap-3">
-                                <Link href={channelHandle ? `/channel/${channelHandle}` : '#'} className="font-bold text-foreground hover:text-primary transition-colors">
-                                    {channelName}
-                                </Link>
-                                <span className="px-3 py-1 text-[11px] font-bold rounded-full border bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-blue-300 border-blue-500/40">
-                                    New Video
-                                </span>
-                            </div>
+                            <Link href={channelHandle ? `/channel/${channelHandle}` : '#'} className="font-bold text-foreground hover:text-primary transition-colors">
+                                {channelName}
+                            </Link>
                             <p className="text-sm text-muted-foreground mt-0.5">
                                 {formatDistanceToNow(new Date(video.createdAt))} ago
                             </p>
