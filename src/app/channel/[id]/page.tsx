@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, notFound as navigateNotFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Upload, Loader2 } from 'lucide-react';
+import { Settings, Upload, Loader2, Share2, MoreHorizontal } from 'lucide-react';
 import PageContainer from '@/components/layout/PageContainer';
 import { useStore } from '@/store/useStore';
 import { channelApi } from '@/lib/api/channels';
@@ -15,9 +14,11 @@ import { videoApi } from '@/lib/api/videos';
 import Link from 'next/link';
 import PostsFeed from '@/components/posts/PostsFeed';
 import VideoUploadDialog from '@/components/video/VideoUploadDialog';
-import VideoCard from '@/components/video/VideoCard';
-import ChannelHome from '@/components/channel/ChannelHome';
 import { VideoData } from '@/lib/api/videos';
+import SubscribeButton from '@/components/channel/SubscribeButton';
+import { formatViews } from '@/lib/formatters';
+import { cn } from '@/lib/utils';
+import ChannelContentGrid from '@/components/channel/ChannelContentGrid';
 
 interface ChannelData {
     id: string;
@@ -34,8 +35,7 @@ interface ChannelData {
     notifyOnNewVideo: boolean;
 }
 
-import SubscribeButton from '@/components/channel/SubscribeButton';
-import { formatViews } from '@/lib/formatters';
+type TabType = 'post' | 'videos' | 'file' | 'gifts';
 
 export default function ChannelPage() {
     const params = useParams();
@@ -48,9 +48,10 @@ export default function ChannelPage() {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [videos, setVideos] = useState<VideoData[]>([]);
     const [isLoadingVideos, setIsLoadingVideos] = useState(true);
+    const [activeTab, setActiveTab] = useState<TabType>('post');
 
     const isOwner = user && channel && user.id === channel.ownerId;
-
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
 
     const fetchChannelData = async () => {
         if (!id) return;
@@ -60,7 +61,6 @@ export default function ChannelPage() {
 
         try {
             let response;
-            // If the ID starts with @, it's a handle
             if (id.startsWith('@') || id.startsWith('%40')) {
                 const handle = id.startsWith('%40') ? '@' + id.slice(3) : id;
                 response = await channelApi.getByHandle(handle);
@@ -95,13 +95,20 @@ export default function ChannelPage() {
 
     useEffect(() => {
         fetchChannelData();
-    }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [id, user]);
 
     useEffect(() => {
         if (channel?.id) {
             fetchVideos();
         }
     }, [channel?.id]);
+
+    const tabs: { key: TabType; label: string }[] = [
+        { key: 'post', label: 'Post' },
+        { key: 'videos', label: 'Videos' },
+        { key: 'file', label: 'File' },
+        { key: 'gifts', label: 'Gifts' },
+    ];
 
     if (loading) {
         return (
@@ -130,64 +137,52 @@ export default function ChannelPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground pb-20">
+        <div className="min-h-screen bg-[#F8F8F8] dark:bg-background text-foreground">
             <Header />
             <Sidebar />
 
             <PageContainer>
-                {/* Banner */}
-                <div className="w-full h-48 md:h-64 lg:h-80 relative overflow-hidden bg-gradient-to-br from-primary/30 to-blue-500/20">
-                    {channel.bannerUrl ? (
-                        <img
-                            src={channel.bannerUrl}
-                            alt="Channel Banner"
-                            className="w-full h-full object-cover"
+                {/* Channel Profile Section - Centered */}
+                <div className="flex flex-col items-center py-12 px-4">
+                    {/* Circular Avatar */}
+                    <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-white shadow-xl mb-4">
+                        <AvatarImage
+                            src={channel.avatarUrl ? (channel.avatarUrl.startsWith('http') ? channel.avatarUrl : `${backendUrl}${channel.avatarUrl}`) : undefined}
                         />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-blue-500/20" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                </div>
-
-                {/* Channel Header Info */}
-                <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-8 relative z-10 flex flex-col md:flex-row items-start md:items-end gap-6 mb-8">
-                    <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-background shadow-xl">
-                        <AvatarImage src={channel.avatarUrl} />
-                        <AvatarFallback className="text-4xl font-bold">{channel.name[0]}</AvatarFallback>
+                        <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-yellow-400 to-orange-500 text-white">
+                            {channel.name[0]}
+                        </AvatarFallback>
                     </Avatar>
 
-                    <div className="flex-1 min-w-0 mb-2 md:mb-4">
-                        <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-3xl md:text-5xl font-black tracking-tight">{channel.name}</h1>
-                            {channel.verified && (
-                                <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full font-medium">
-                                    Verified
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex flex-col gap-1 text-muted-foreground font-medium">
-                            <div className="flex items-center gap-2">
-                                <span className="text-foreground">{channel.handle}</span>
-                                <span>•</span>
-                                <span>{channel.subscriberCount.toLocaleString()} subscribers</span>
-                                <span>•</span>
-                                <span>{channel.videoCount} videos</span>
-                            </div>
-                            {channel.description && (
-                                <p className="max-w-2xl line-clamp-2 text-sm md:text-base">{channel.description}</p>
-                            )}
-                        </div>
-                    </div>
+                    {/* Channel Name */}
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+                        {channel.name}
+                    </h1>
 
-                    <div className="flex items-center gap-3 mb-4 w-full md:w-auto">
+                    {/* Handle */}
+                    <p className="text-muted-foreground mb-1">
+                        @{channel.handle.replace('@', '')}
+                    </p>
+
+                    {/* Subscriber Count */}
+                    <p className="text-primary font-medium mb-6">
+                        {formatViews(channel.subscriberCount)} subscribers
+                    </p>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3 mb-8">
+                        {/* Share Button */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full border border-border h-10 w-10"
+                        >
+                            <Share2 className="h-4 w-4" />
+                        </Button>
+
+                        {/* Subscribe/Joined Button */}
                         {isOwner ? (
-                            <>
-                                <Link href="/channel/settings">
-                                    <Button variant="secondary" className="rounded-full px-6 font-bold h-10">
-                                        <Settings className="w-4 h-4 mr-2" />
-                                        Manage Channel
-                                    </Button>
-                                </Link>
+                            <div className="flex items-center gap-3">
                                 <Button
                                     onClick={() => setIsUploadOpen(true)}
                                     className="rounded-full px-6 font-bold bg-primary text-primary-foreground h-10"
@@ -195,7 +190,12 @@ export default function ChannelPage() {
                                     <Upload className="w-4 h-4 mr-2" />
                                     Upload
                                 </Button>
-                            </>
+                                <Link href="/channel/settings">
+                                    <Button variant="secondary" size="icon" className="rounded-full h-10 w-10">
+                                        <Settings className="w-4 h-4" />
+                                    </Button>
+                                </Link>
+                            </div>
                         ) : (
                             <SubscribeButton
                                 channelId={channel.id}
@@ -206,56 +206,67 @@ export default function ChannelPage() {
                                 size="lg"
                             />
                         )}
+
+                        {/* More Options */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full border border-border h-10 w-10"
+                        >
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    {/* Content Tabs */}
+                    <div className="flex items-center gap-2 mb-8">
+                        {tabs.map((tab) => (
+                            <Button
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key)}
+                                variant={activeTab === tab.key ? "default" : "outline"}
+                                className={cn(
+                                    "rounded-full px-6 font-medium transition-all",
+                                    activeTab === tab.key
+                                        ? "bg-primary text-primary-foreground shadow-md"
+                                        : "bg-white dark:bg-secondary text-foreground hover:bg-gray-100 dark:hover:bg-secondary/80 border-gray-200 dark:border-border"
+                                )}
+                            >
+                                {tab.label}
+                            </Button>
+                        ))}
                     </div>
                 </div>
 
-                {/* Tabs & Content */}
-                <div className="max-w-7xl mx-auto px-4 md:px-8">
-                    <Tabs defaultValue="home" className="w-full">
-                        <TabsList className="bg-transparent border-b border-white/10 w-full justify-start h-auto p-0 rounded-none mb-8">
-                            {['Home', 'Videos', 'Posts', 'Shorts', 'Live', 'Playlists'].map((tab) => (
-                                <TabsTrigger
-                                    key={tab}
-                                    value={tab.toLowerCase()}
-                                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground px-6 py-3 font-semibold text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    {tab}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-
-                        <TabsContent value="videos" className="mt-0">
-                            {isLoadingVideos ? (
-                                <div className="flex items-center justify-center py-20">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                </div>
-                            ) : videos.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-                                    {videos.map((video) => (
-                                        <VideoCard key={video.id} video={video} />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="py-20 text-center text-muted-foreground">
-                                    <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                    <p className="text-lg font-medium mb-2">No videos uploaded yet</p>
-                                    {isOwner && (
-                                        <p className="text-sm">Upload your first video to get started!</p>
-                                    )}
-                                </div>
-                            )}
-                        </TabsContent>
-                        <TabsContent value="home" className="mt-0">
-                            <ChannelHome
-                                videos={videos}
-                                channel={channel}
-                                isOwner={isOwner || false}
-                            />
-                        </TabsContent>
-                        <TabsContent value="posts" className="mt-0">
-                            <PostsFeed channelId={channel.id} isOwner={isOwner || false} />
-                        </TabsContent>
-                    </Tabs>
+                {/* Content Area */}
+                <div className="max-w-6xl mx-auto px-4 pb-20">
+                    {activeTab === 'post' && (
+                        <ChannelContentGrid
+                            channelId={channel.id}
+                            type="posts"
+                            isOwner={isOwner || false}
+                        />
+                    )}
+                    {activeTab === 'videos' && (
+                        <ChannelContentGrid
+                            channelId={channel.id}
+                            type="videos"
+                            videos={videos}
+                            isLoading={isLoadingVideos}
+                            isOwner={isOwner || false}
+                        />
+                    )}
+                    {activeTab === 'file' && (
+                        <div className="text-center py-20 text-muted-foreground">
+                            <p className="text-lg font-medium">No files shared yet</p>
+                            <p className="text-sm mt-1">Files shared by this creator will appear here</p>
+                        </div>
+                    )}
+                    {activeTab === 'gifts' && (
+                        <div className="text-center py-20 text-muted-foreground">
+                            <p className="text-lg font-medium">No gifts yet</p>
+                            <p className="text-sm mt-1">Support this creator by sending a gift</p>
+                        </div>
+                    )}
                 </div>
 
                 {channel && (
@@ -266,7 +277,6 @@ export default function ChannelPage() {
                     />
                 )}
             </PageContainer>
-
         </div>
     );
 }
