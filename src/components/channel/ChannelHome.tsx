@@ -99,45 +99,54 @@ export default function ChannelHome({ videos, channel, isOwner }: ChannelHomePro
                             </div>
 
                             {/* Content overlay */}
-                            <div className="absolute inset-0 flex items-end p-8 md:p-12">
-                                <div className="max-w-2xl space-y-4">
+                            <div className="absolute inset-0 flex items-end p-8 md:p-16">
+                                <div className="max-w-3xl space-y-6">
                                     {/* Badge */}
                                     <div className="flex items-center gap-2">
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/90 text-primary-foreground rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                                            <Sparkles className="w-3 h-3" />
-                                            Featured
+                                        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-primary text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20">
+                                            <Sparkles className="w-3.5 h-3.5" />
+                                            Featured Video
                                         </span>
                                     </div>
 
                                     {/* Title */}
-                                    <h2 className="text-3xl md:text-5xl font-black text-white leading-tight line-clamp-2 drop-shadow-lg">
+                                    <h2 className="text-4xl md:text-6xl font-black text-white leading-[1.1] tracking-tight drop-shadow-2xl">
                                         {featuredVideo.title}
                                     </h2>
 
                                     {/* Stats */}
-                                    <div className="flex items-center gap-4 text-white/80 text-sm font-medium">
-                                        <span className="flex items-center gap-1.5">
-                                            <Eye className="w-4 h-4" />
-                                            {formatViews(featuredVideo.views)} views
+                                    <div className="flex flex-wrap items-center gap-6 text-white/90 text-sm md:text-base font-bold">
+                                        <span className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg">
+                                            <Eye className="w-4 h-4 text-primary" />
+                                            {formatViews(featuredVideo.views)}
                                         </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <Clock className="w-4 h-4" />
+                                        <span className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg">
+                                            <Clock className="w-4 h-4 text-primary" />
                                             {formatDuration(featuredVideo.duration || 0)}
                                         </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <Calendar className="w-4 h-4" />
+                                        <span className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg">
+                                            <Calendar className="w-4 h-4 text-primary" />
                                             {formatTimeAgo(featuredVideo.createdAt)}
                                         </span>
                                     </div>
 
                                     {/* Play button */}
-                                    <Button
-                                        size="lg"
-                                        className="mt-4 rounded-full px-8 bg-white text-black hover:bg-white/90 font-bold shadow-2xl group-hover:scale-105 transition-transform"
-                                    >
-                                        <Play className="w-5 h-5 mr-2 fill-current" />
-                                        Watch Now
-                                    </Button>
+                                    <div className="flex items-center gap-4 pt-2">
+                                        <Button
+                                            size="lg"
+                                            className="rounded-full px-10 h-14 bg-white text-black hover:bg-neutral-200 font-black text-lg shadow-2xl transition-all hover:scale-105 active:scale-95"
+                                        >
+                                            <Play className="w-6 h-6 mr-3 fill-current" />
+                                            WATCH NOW
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            className="rounded-full px-8 h-14 border-2 border-white/30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 font-bold transition-all"
+                                        >
+                                            View Details
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -245,39 +254,48 @@ export default function ChannelHome({ videos, channel, isOwner }: ChannelHomePro
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {popularVideos.map((video, index) => (
                             <Link key={video.id} href={`/watch/${video.id}`}>
-                                <div className="group relative bg-card/50 rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5">
+                                <div className="group relative bg-zinc-50 dark:bg-zinc-900 rounded-3xl overflow-hidden border border-border/50 hover:border-primary/40 transition-all hover:shadow-2xl hover:shadow-primary/10">
                                     {/* Rank badge */}
-                                    <div className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center text-white font-black text-sm border border-white/10">
+                                    <div className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-black/80 backdrop-blur-md flex items-center justify-center text-white font-black text-lg border border-white/20 shadow-xl">
                                         {index + 2}
                                     </div>
 
-                                    <div className="aspect-video relative">
+                                    <div className="aspect-video relative overflow-hidden">
                                         <img
                                             src={video.thumbnailUrl || '/placeholder-video.jpg'}
                                             alt={video.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                                         {/* Duration */}
-                                        <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 text-white text-xs font-bold rounded">
+                                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 text-white text-[10px] font-black rounded-md backdrop-blur-sm">
                                             {formatDuration(video.duration || 0)}
+                                        </div>
+
+                                        {/* Play icon overlay */}
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+                                                <Play className="w-5 h-5 text-white fill-current" />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-4">
-                                        <h4 className="font-bold line-clamp-2 group-hover:text-primary transition-colors mb-2">
+                                    <div className="p-6">
+                                        <h4 className="text-lg font-bold line-clamp-2 group-hover:text-primary transition-colors mb-3 leading-tight">
                                             {video.title}
                                         </h4>
-                                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                            <span className="flex items-center gap-1">
+                                        <div className="flex items-center justify-between text-xs text-muted-foreground font-bold">
+                                            <span className="flex items-center gap-1.5 px-2 py-1 bg-secondary/50 rounded-md">
                                                 <Eye className="w-3.5 h-3.5" />
-                                                {formatViews(video.views)}
+                                                {formatViews(video.views)} views
                                             </span>
-                                            <span>{formatTimeAgo(video.createdAt)}</span>
+                                            <span className="px-2 py-1 bg-secondary/50 rounded-md">
+                                                {formatTimeAgo(video.createdAt)}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
