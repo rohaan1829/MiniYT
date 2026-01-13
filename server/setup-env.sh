@@ -11,7 +11,7 @@ PORT=4000
 # Database (Neon PostgreSQL)
 # Get from: https://console.neon.tech
 # TODO: Replace with your actual Neon database URL
-DATABASE_URL="postgresql://user:password@host.neon.tech/miniyt?sslmode=require"
+DATABASE_URL="postgresql://user:password@host.neon.tech/yiddishtishel?sslmode=require"
 
 # Redis (Upstash)
 # Get from: https://console.upstash.com

@@ -404,7 +404,7 @@ export const useStore = create<AppState>()(
             setUploadDialogOpen: (value: boolean) => set({ uploadDialogOpen: value }),
         }),
         {
-            name: 'miniyt-storage',
+            name: 'yiddishtishel-storage',
             storage: createJSONStorage(() => ({
                 getItem: (name) => {
                     const local = localStorage.getItem(name);

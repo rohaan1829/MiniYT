@@ -1,6 +1,6 @@
-# 🚀 MiniYT Backend Setup Guide
+# 🚀 Yiddishtishel Backend Setup Guide
 
-This guide will walk you through setting up the backend for your MiniYT video streaming platform.
+This guide will walk you through setting up the backend for your Yiddishtishel video streaming platform.
 
 ## ✅ What's Been Created
 
@@ -31,7 +31,7 @@ server/
 1. Go to [https://console.neon.tech](https://console.neon.tech)
 2. Sign up / Log in
 3. Click "Create Project"
-4. Give it a name (e.g., "miniyt")
+4. Give it a name (e.g., "yiddishtishel")
 5. Select region closest to you
 6. Click "Create Project"
 7. **Copy the connection string** - it looks like:
@@ -44,7 +44,7 @@ server/
 1. Go to [https://console.upstash.com](https://console.upstash.com)
 2. Sign up / Log in
 3. Click "Create Database"
-4. Give it a name (e.g., "miniyt-cache")
+4. Give it a name (e.g., "yiddishtishel-cache")
 5. Select region closest to you
 6. Click "Create"
 7. Go to the database details page
@@ -70,7 +70,7 @@ Open `server/.env` and replace these values:
 
 ```bash
 # Replace this line:
-DATABASE_URL="postgresql://user:password@host.neon.tech/miniyt?sslmode=require"
+DATABASE_URL="postgresql://user:password@host.neon.tech/yiddishtishel?sslmode=require"
 # With your actual Neon connection string from Step 1
 
 # Replace this line:

@@ -1,7 +1,7 @@
-# MiniYT Backend Stack Plan
+# Yiddishtishel Backend Stack Plan
 
 ## 🎯 Project Overview
-MiniYT is a video streaming platform with a Next.js/React frontend. This document outlines recommended backend architectures and technology stacks.
+Yiddishtishel is a video streaming platform with a Next.js/React frontend. This document outlines recommended backend architectures and technology stacks.
 
 ---
 
@@ -139,7 +139,7 @@ MiniYT is a video streaming platform with a Next.js/React frontend. This documen
 
 ---
 
-## 📋 Recommended Stack for MiniYT (Phase 1)
+## 📋 Recommended Stack for Yiddishtishel (Phase 1)
 
 ### **🎯 RECOMMENDED: Option 1 (Full TypeScript)**
 

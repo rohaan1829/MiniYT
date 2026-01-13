@@ -59,7 +59,7 @@ export default function HeroSection() {
                     </div>
 
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-                        Welcome to MiniYT
+                        Welcome to Yiddishtishel
                     </h1>
 
                     <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-8">

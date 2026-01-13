@@ -1,6 +1,6 @@
-# MiniYT Backend
+# Yiddishtishel Backend
 
-Backend API for MiniYT video streaming platform built with Node.js, TypeScript, Express, Prisma, and Redis.
+Backend API for Yiddishtishel video streaming platform built with Node.js, TypeScript, Express, Prisma, and Redis.
 
 ## 🚀 Quick Start
 

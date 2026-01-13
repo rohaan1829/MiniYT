@@ -93,7 +93,7 @@ export default function Header() {
                     <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary font-black text-2xl border border-primary/50">
                         V
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight hidden md:block">miniYT</h1>
+                    <h1 className="text-3xl font-bold tracking-tight hidden md:block">Yiddishtishel</h1>
                 </Link>
             </div>
 

@@ -46,7 +46,7 @@ export default function ProfilePage() {
                             </Button>
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight">Your Profile</h1>
-                                <p className="text-muted-foreground">Manage your personal presence on MiniYT</p>
+                                <p className="text-muted-foreground">Manage your personal presence on Yiddishtishel</p>
                             </div>
                         </div>
 

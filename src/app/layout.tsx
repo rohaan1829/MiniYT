@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "yiddishtishel",
-  description: "MiniYT - A minimal YouTube clone",
+  description: "Yiddishtishel - A minimal YouTube clone",
 };
 
 export default function RootLayout({

@@ -1,7 +1,7 @@
 {
-        "name": "miniyt-backend",
+        "name": "yiddishtishel-backend",
         "version": "1.0.0",
-        "description": "Backend API for MiniYT video streaming platform",
+        "description": "Backend API for Yiddishtishel video streaming platform",
         "main": "dist/index.js",
         "scripts": {
                 "dev": "tsx watch src/index.ts",

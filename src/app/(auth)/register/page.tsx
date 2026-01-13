@@ -79,7 +79,7 @@ function RegisterForm() {
                     V
                 </div>
                 <h1 className="text-2xl font-bold">Create Account</h1>
-                <p className="text-muted-foreground">Join the MiniYT community</p>
+                <p className="text-muted-foreground">Join the Yiddishtishel community</p>
             </div>
 
             <CardContent>

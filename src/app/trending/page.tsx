@@ -36,7 +36,7 @@ export default function TrendingPage() {
                     <h1 className="text-3xl font-bold">Trending</h1>
                 </div>
 
-                <p className="text-muted-foreground mb-8 text-lg">Top videos trending on MiniYT right now.</p>
+                <p className="text-muted-foreground mb-8 text-lg">Top videos trending on Yiddishtishel right now.</p>
 
                 <TrendingGrid />
             </main>

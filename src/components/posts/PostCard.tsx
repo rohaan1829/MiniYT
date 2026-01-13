@@ -129,7 +129,7 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
                         {/* Bottom text */}
                         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                             <span className="text-white font-bold text-lg drop-shadow-lg">
-                                Watch on MiniYT
+                                Watch on Yiddishtishel
                             </span>
                         </div>
                     </div>
@@ -219,8 +219,8 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
                             onClick={handleLike}
                             disabled={isLiking}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${liked
-                                    ? 'bg-pink-500/20 text-pink-400'
-                                    : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
+                                ? 'bg-pink-500/20 text-pink-400'
+                                : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
                                 }`}
                         >
                             <ThumbsUp className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
@@ -230,8 +230,8 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
                         <button
                             onClick={() => setShowComments(!showComments)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${showComments
-                                    ? 'bg-blue-500/20 text-blue-400'
-                                    : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground'
                                 }`}
                         >
                             <MessageSquare className="h-4 w-4" />
