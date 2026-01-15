@@ -27,11 +27,11 @@ export default function WatchLayout({ children, sidebar }: WatchLayoutProps) {
     return (
         <main
             className={cn(
-                "mx-auto pt-4 transition-[padding] duration-300",
+                "mx-auto pt-0 md:pt-4 transition-[padding] duration-300",
                 cinematicMode
                     ? "max-w-full px-0"
-                    : "max-w-[1800px] px-4 lg:px-6",
-                sidebarOpen ? "pl-72" : ""
+                    : "max-w-[1800px] px-0 md:px-4 lg:px-6",
+                sidebarOpen ? "md:pl-72" : ""
             )}
         >
             {/* Flex container for layout */}

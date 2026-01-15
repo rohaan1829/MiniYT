@@ -146,9 +146,9 @@ export default function ChannelPage() {
 
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
                     {/* Header Info Section */}
-                    <div className="flex flex-col md:flex-row gap-6 py-8">
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-6 py-4 md:py-8">
                         {/* Avatar */}
-                        <div className="relative -mt-16 md:-mt-20 shrink-0">
+                        <div className="relative -mt-12 md:-mt-20 shrink-0 mx-auto md:mx-0">
                             <div className="h-24 w-24 md:h-40 md:w-40 rounded-full border-4 border-background overflow-hidden bg-zinc-100 dark:bg-zinc-800 shadow-xl">
                                 <img
                                     src={channel.avatarUrl ? (channel.avatarUrl.startsWith('http') ? channel.avatarUrl : `${backendUrl}${channel.avatarUrl}`) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${channel.name}`}
@@ -159,58 +159,57 @@ export default function ChannelPage() {
                         </div>
 
                         {/* Text and Actions */}
-                        <div className="flex-1 space-y-4">
-                            <div className="flex flex-wrap items-start justify-between gap-4">
-                                <div className="space-y-1">
-                                    <h1 className="text-2xl md:text-3xl font-black tracking-tight">{channel.name}</h1>
-                                    <div className="flex items-center gap-2 text-sm md:text-base text-muted-foreground font-medium">
-                                        <span>{channel.handle}</span>
-                                        <span>•</span>
-                                        <span>{formatViews(channel.subscriberCount)} subscribers</span>
-                                        <span>•</span>
-                                        <span>{channel.videoCount} videos</span>
-                                    </div>
-                                    {channel.description && (
-                                        <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl pt-2">
-                                            {channel.description}
-                                        </p>
-                                    )}
+                        <div className="flex-1 space-y-4 text-center md:text-left">
+                            <div className="flex flex-col items-center md:items-start space-y-2">
+                                <h1 className="text-2xl md:text-3xl font-black tracking-tight">{channel.name}</h1>
+                                <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-2 gap-y-1 text-xs md:text-base text-muted-foreground font-medium">
+                                    <span>{channel.handle}</span>
+                                    <span className="hidden xs:inline">•</span>
+                                    <span>{formatViews(channel.subscriberCount)} subscribers</span>
+                                    <span className="hidden xs:inline">•</span>
+                                    <span>{channel.videoCount} videos</span>
                                 </div>
+                                {channel.description && (
+                                    <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl pt-1">
+                                        {channel.description}
+                                    </p>
+                                )}
+                            </div>
 
-                                <div className="flex items-center gap-3">
-                                    {isOwner ? (
-                                        <>
-                                            <Button
-                                                onClick={() => setIsUploadOpen(true)}
-                                                className="rounded-full px-6 font-bold"
-                                            >
-                                                Upload Video
+                            <div className="flex items-center justify-center md:justify-start gap-3">
+                                {isOwner ? (
+                                    <>
+                                        <Button
+                                            onClick={() => setIsUploadOpen(true)}
+                                            className="rounded-full px-4 md:px-6 font-bold text-sm"
+                                        >
+                                            Upload
+                                        </Button>
+                                        <Button
+                                            variant="secondary"
+                                            className="rounded-full px-4 md:px-6 font-bold text-sm"
+                                        >
+                                            Customize
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <SubscribeButton
+                                            channelId={channel.id}
+                                            channelName={channel.name}
+                                            initialSubscribed={channel.isSubscribed}
+                                            initialNotify={channel.notifyOnNewVideo}
+                                            subscriberCount={channel.subscriberCount}
+                                            size="sm"
+                                            className="md:scale-110"
+                                        />
+                                        {channel.isSubscribed && (
+                                            <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                                                <Bell className="h-4 w-4 md:h-5 md:w-5" />
                                             </Button>
-                                            <Button
-                                                variant="secondary"
-                                                className="rounded-full px-6 font-bold"
-                                            >
-                                                Customize Channel
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <SubscribeButton
-                                                channelId={channel.id}
-                                                channelName={channel.name}
-                                                initialSubscribed={channel.isSubscribed}
-                                                initialNotify={channel.notifyOnNewVideo}
-                                                subscriberCount={channel.subscriberCount}
-                                                size="lg"
-                                            />
-                                            {channel.isSubscribed && (
-                                                <Button variant="ghost" size="icon" className="rounded-full">
-                                                    <Bell className="h-5 w-5" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

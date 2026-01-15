@@ -82,17 +82,17 @@ export default function CommunityPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => router.back()}
-                            className="rounded-full hover:bg-secondary"
+                            className="rounded-full hover:bg-secondary shrink-0"
                         >
-                            <ArrowLeft className="h-6 w-6" />
+                            <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
                         </Button>
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <Users className="h-5 w-5 text-primary" />
-                                <span className="text-sm font-bold text-primary uppercase tracking-widest">Discover</span>
+                            <div className="flex items-center gap-2 mb-0.5 md:mb-1">
+                                <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                                <span className="text-[10px] md:text-sm font-bold text-primary uppercase tracking-widest">Discover</span>
                             </div>
-                            <h1 className="text-4xl font-black tracking-tight">Community</h1>
-                            <p className="text-muted-foreground mt-1">
+                            <h1 className="text-2xl md:text-4xl font-black tracking-tight">Community</h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">
                                 Posts and updates from creators
                             </p>
                         </div>

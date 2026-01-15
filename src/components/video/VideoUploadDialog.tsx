@@ -156,7 +156,7 @@ export default function VideoUploadDialog({ isOpen, onClose, onSuccess }: VideoU
     return (
         <>
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="sm:max-w-[600px] bg-background border-border rounded-3xl p-0 overflow-hidden shadow-2xl">
+                <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-w-[600px] bg-background border-border sm:rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
                     <DialogHeader className="p-6 border-b border-border bg-secondary/30 relative">
                         <DialogTitle className="text-xl font-bold flex items-center gap-2">
                             {status === 'idle' ? 'Upload Video' : 'Uploading Your Video'}
@@ -176,7 +176,7 @@ export default function VideoUploadDialog({ isOpen, onClose, onSuccess }: VideoU
                         )}
                     </DialogHeader>
 
-                    <div className="overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
                         <div className="p-6 space-y-6">
                             {status === 'idle' && (
                                 <div className="space-y-6">

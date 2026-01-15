@@ -151,9 +151,9 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                 />
             </div>
 
-            <h1 className="text-2xl font-bold mt-2">{video.title}</h1>
+            <h1 className="text-xl md:text-2xl font-bold mt-2 px-4 md:px-0">{video.title}</h1>
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 md:px-0">
                 <div className="flex items-center gap-4">
                     <Avatar className="w-10 h-10 md:w-12 md:h-12 border border-border">
                         <AvatarImage src={channel?.avatarUrl} />
@@ -171,7 +171,7 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                         initialSubscribed={channel?.isSubscribed}
                         initialNotify={channel?.notifyOnNewVideo}
                         subscriberCount={channel?.subscriberCount}
-                        className="ml-4"
+                        className="ml-auto md:ml-4"
                     />
                 </div>
 
@@ -227,7 +227,7 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                 </div>
             </div>
 
-            <div className="bg-secondary/50 rounded-xl p-4 mt-2 cursor-pointer hover:bg-secondary/70 transition-colors" onClick={() => setIsDescExpanded(!isDescExpanded)}>
+            <div className="mx-4 md:mx-0 bg-secondary/50 rounded-xl p-4 mt-2 cursor-pointer hover:bg-secondary/70 transition-colors" onClick={() => setIsDescExpanded(!isDescExpanded)}>
                 <div className="flex gap-2 font-bold text-sm mb-2">
                     <span>{formatViews(video.views)} views</span>
                     <span>{formatTimeAgo(video.createdAt)}</span>
@@ -241,17 +241,19 @@ export default function VideoPlayerSection({ video }: { video: any }) {
             </div>
 
             {/* Channel Community Section */}
-            {channel && (
-                <ChannelCommunitySection
-                    channelId={channel.id}
-                    channelName={channel.name}
-                    channelHandle={channel.handle}
-                    channelAvatar={channel.avatarUrl}
-                />
-            )}
+            <div className="px-4 md:px-0">
+                {channel && (
+                    <ChannelCommunitySection
+                        channelId={channel.id}
+                        channelName={channel.name}
+                        channelHandle={channel.handle}
+                        channelAvatar={channel.avatarUrl}
+                    />
+                )}
 
-            <Comments videoId={video.id} />
-            <PublicComments videoId={video.id} />
+                <Comments videoId={video.id} />
+                <PublicComments videoId={video.id} />
+            </div>
         </div>
     );
 }

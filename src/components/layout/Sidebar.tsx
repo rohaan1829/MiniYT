@@ -93,7 +93,7 @@ export default function Sidebar() {
     return (
         <aside
             className={cn(
-                "fixed left-0 top-24 bottom-0 z-40 transition-all duration-300 overflow-y-auto hide-scrollbar flex flex-col",
+                "fixed left-0 top-16 md:top-24 bottom-0 z-40 transition-all duration-300 overflow-y-auto hide-scrollbar hidden md:flex flex-col",
                 "bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl",
                 "border-r border-gray-200/50 dark:border-gray-800/50",
                 sidebarOpen
