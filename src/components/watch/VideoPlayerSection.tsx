@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import HLSPlayer from '@/components/player/HLSPlayer';
 import Comments from './Comments';
 import PublicComments from './PublicComments';
+import ChannelCommunitySection from './ChannelCommunitySection';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, ThumbsDown, Share2, MoreHorizontal, Download, ListPlus, ListChecks, Loader2 } from 'lucide-react';
@@ -238,6 +239,16 @@ export default function VideoPlayerSection({ video }: { video: any }) {
                     {isDescExpanded ? 'Show less' : '...more'}
                 </button>
             </div>
+
+            {/* Channel Community Section */}
+            {channel && (
+                <ChannelCommunitySection
+                    channelId={channel.id}
+                    channelName={channel.name}
+                    channelHandle={channel.handle}
+                    channelAvatar={channel.avatarUrl}
+                />
+            )}
 
             <Comments videoId={video.id} />
             <PublicComments videoId={video.id} />
