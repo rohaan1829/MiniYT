@@ -2,9 +2,9 @@
 
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
-import { Home, Compass, Radio, Users, History, PlaySquare, Clock, ThumbsUp, Flame } from 'lucide-react';
+import { LayoutGrid, Heart, PlusCircle, PlayCircle, Users, Monitor, ChevronRight, LogOut } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface SidebarItemProps {
     icon: React.ElementType;
@@ -12,89 +12,106 @@ interface SidebarItemProps {
     href?: string;
     isActive?: boolean;
     isOpen: boolean;
+    hasChevron?: boolean;
+    onClick?: () => void;
+    variant?: 'default' | 'danger';
 }
 
-const SidebarItem = ({ icon: Icon, label, href = "#", isActive, isOpen }: SidebarItemProps) => {
-    return (
-        <Link
-            href={href}
+const SidebarItem = ({ icon: Icon, label, href = "#", isActive, isOpen, hasChevron, onClick, variant = 'default' }: SidebarItemProps) => {
+    const content = (
+        <div
             className={cn(
-                "flex items-center p-3 rounded-lg mb-1 transition-colors group",
+                "flex items-center p-4 rounded-xl mb-2 transition-all duration-200 group cursor-pointer",
                 isActive
                     ? "bg-primary/10 text-primary"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                    : variant === 'danger'
+                        ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                        : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800",
                 !isOpen && "justify-center"
             )}
+            onClick={onClick}
         >
-            <Icon size={20} className={cn(
+            {hasChevron && isOpen && (
+                <ChevronRight size={16} className="mr-2 text-gray-300" />
+            )}
+            <Icon size={22} className={cn(
                 "transition-transform duration-200 group-hover:scale-110",
-                isActive && "text-primary"
+                isActive && "text-primary",
+                variant === 'danger' && "text-red-500"
             )} />
-            {isOpen && <span className="ml-4 font-medium text-sm transition-all duration-200">{label}</span>}
-        </Link>
+            {isOpen && (
+                <span className={cn(
+                    "ml-4 font-medium text-sm transition-all duration-200",
+                    isActive ? "text-primary" : variant === 'danger' ? "text-red-500" : "text-gray-400"
+                )}>
+                    {label}
+                </span>
+            )}
+        </div>
     );
+
+    if (onClick) {
+        return content;
+    }
+
+    return <Link href={href}>{content}</Link>;
 };
 
 export default function Sidebar() {
-    const { sidebarOpen, isAuthenticated, user } = useStore();
+    const { sidebarOpen, isAuthenticated, user, logout } = useStore();
     const pathname = usePathname();
-    const isWatchPage = pathname?.startsWith('/watch');
+    const router = useRouter();
+
+    const handleLogout = () => {
+        logout();
+        router.push('/');
+    };
 
     return (
         <aside
             className={cn(
-                "fixed left-0 top-24 bottom-0 z-40 bg-background/80 backdrop-blur-md border-r border-border transition-[width,transform] duration-300 overflow-y-auto hide-scrollbar",
+                "fixed left-0 top-24 bottom-0 z-40 bg-background/80 backdrop-blur-md border-r border-border transition-[width,transform] duration-300 overflow-y-auto hide-scrollbar flex flex-col",
                 sidebarOpen
-                    ? "w-64 px-4 py-4"
+                    ? "w-64 px-4 py-6"
                     : "w-0 px-0 -translate-x-full border-none"
             )}
         >
-            <div className="mb-6">
-                <SidebarItem icon={Home} label="Home" href="/" isOpen={sidebarOpen} isActive={pathname === '/'} />
-                <SidebarItem icon={Compass} label="Explore" href="/explore" isOpen={sidebarOpen} isActive={pathname === '/explore'} />
-                {isAuthenticated && (
-                    <SidebarItem icon={Users} label="Subscriptions" href="/subscriptions" isOpen={sidebarOpen} isActive={pathname === '/subscriptions'} />
+            {/* MENU Section */}
+            <div className="flex-1">
+                {sidebarOpen && (
+                    <h3 className="px-4 mb-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Menu
+                    </h3>
                 )}
-                <SidebarItem icon={Flame} label="Trending" href="/trending" isOpen={sidebarOpen} isActive={pathname === '/trending'} />
-                <SidebarItem icon={Radio} label="Live" href="/live" isOpen={sidebarOpen} isActive={pathname === '/live'} />
+                <SidebarItem icon={LayoutGrid} label="Home" href="/" isOpen={sidebarOpen} isActive={pathname === '/'} />
+                <SidebarItem icon={Heart} label="Subscription" href="/subscriptions" isOpen={sidebarOpen} isActive={pathname === '/subscriptions'} />
+                {isAuthenticated && user?.channel && (
+                    <>
+                        <SidebarItem icon={PlusCircle} label="Upload" href="/dashboard" isOpen={sidebarOpen} isActive={pathname === '/dashboard'} />
+                        <SidebarItem icon={PlayCircle} label="Videos" href={`/channel/${user.channel.id}`} isOpen={sidebarOpen} isActive={pathname?.startsWith('/channel/' + user.channel.id)} />
+                    </>
+                )}
+                <SidebarItem icon={Users} label="Community" href="/explore" isOpen={sidebarOpen} isActive={pathname === '/explore'} />
+                {isAuthenticated && user?.channel && (
+                    <SidebarItem icon={Monitor} label="Channel" href={`/channel/${user.channel.id}`} isOpen={sidebarOpen} isActive={false} hasChevron />
+                )}
             </div>
 
-            {/* Hidden Library and History as per user request */}
-            {/* 
-            <div className="mb-6">
-                <div className="my-2 border-t border-border" />
-                <SidebarItem icon={PlaySquare} label="Library" href="/library" isOpen={sidebarOpen} isActive={pathname === '/library'} />
-                <SidebarItem icon={History} label="History" href="/history" isOpen={sidebarOpen} isActive={pathname === '/history'} />
-            </div>
-
-            {sidebarOpen && <div className="my-2 border-t border-border" />}
-
-            <div className="mb-6">
-                {sidebarOpen && <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Library</h3>}
-                <SidebarItem icon={History} label="History" href="/history" isOpen={sidebarOpen} isActive={pathname === '/history'} />
-                <SidebarItem icon={PlaySquare} label="Your Videos" isOpen={sidebarOpen} />
-                <SidebarItem icon={Clock} label="Watch Later" isOpen={sidebarOpen} />
-                <SidebarItem icon={ThumbsUp} label="Liked Videos" isOpen={sidebarOpen} />
-            </div>
-
-            {sidebarOpen && <div className="my-2 border-t border-border" />}
-            */}
-
-            {isAuthenticated && (
-                <div className="mb-6">
-                    {sidebarOpen && (
-                        <>
-                            <div className="my-2 border-t border-border" />
-                            <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Creator Studio</h3>
-                        </>
-                    )}
-                    {user?.channel && (
-                        <SidebarItem icon={Radio} label="Dashboard" href="/dashboard" isOpen={sidebarOpen} isActive={pathname === '/dashboard'} />
-                    )}
-                    <SidebarItem icon={Users} label="Inbox" href="/inbox" isOpen={sidebarOpen} isActive={pathname === '/inbox'} />
+            {/* Action Section */}
+            {isAuthenticated && sidebarOpen && (
+                <div className="mt-auto pt-4 border-t border-border">
+                    <h3 className="px-4 mb-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        Action
+                    </h3>
+                    <SidebarItem
+                        icon={LogOut}
+                        label="Log Out"
+                        isOpen={sidebarOpen}
+                        variant="danger"
+                        onClick={handleLogout}
+                    />
                 </div>
             )}
-
         </aside>
     );
 }
