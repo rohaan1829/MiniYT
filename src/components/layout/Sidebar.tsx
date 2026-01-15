@@ -87,13 +87,13 @@ export default function Sidebar() {
                 <SidebarItem icon={Heart} label="Subscription" href="/subscriptions" isOpen={sidebarOpen} isActive={pathname === '/subscriptions'} />
                 {isAuthenticated && user?.channel && (
                     <>
-                        <SidebarItem icon={PlusCircle} label="Upload" href="/dashboard" isOpen={sidebarOpen} isActive={pathname === '/dashboard'} />
-                        <SidebarItem icon={PlayCircle} label="Videos" href={`/channel/${user.channel.id}`} isOpen={sidebarOpen} isActive={pathname?.startsWith('/channel/' + user.channel.id)} />
+                        <SidebarItem icon={PlusCircle} label="Upload" href="/upload" isOpen={sidebarOpen} isActive={pathname === '/upload'} />
+                        <SidebarItem icon={PlayCircle} label="Videos" href="/videos" isOpen={sidebarOpen} isActive={pathname === '/videos'} />
                     </>
                 )}
-                <SidebarItem icon={Users} label="Community" href="/explore" isOpen={sidebarOpen} isActive={pathname === '/explore'} />
+                <SidebarItem icon={Users} label="Community" href="/community" isOpen={sidebarOpen} isActive={pathname === '/community'} />
                 {isAuthenticated && user?.channel && (
-                    <SidebarItem icon={Monitor} label="Channel" href={`/channel/${user.channel.id}`} isOpen={sidebarOpen} isActive={false} hasChevron />
+                    <SidebarItem icon={Monitor} label="Channel" href={`/channel/${user.channel.id}`} isOpen={sidebarOpen} isActive={pathname?.startsWith('/channel/' + user.channel.id)} hasChevron />
                 )}
             </div>
 
