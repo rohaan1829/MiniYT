@@ -166,6 +166,7 @@ interface FeedCardProps {
 function FeedCard({ item, channel, getMediaUrl }: FeedCardProps) {
     const [liked, setLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(item.likes || 0);
+    const [imageError, setImageError] = useState(false);
     const { user } = useStore();
 
     const typeConfig = CONTENT_TYPE_CONFIG[item.type || 'TEXT'];
@@ -298,13 +299,19 @@ function FeedCard({ item, channel, getMediaUrl }: FeedCardProps) {
                 )}
 
                 {/* Image */}
-                {item.type === 'IMAGE' && item.mediaUrl && (
+                {item.type === 'IMAGE' && item.mediaUrl && !imageError && (
                     <div className="rounded-2xl overflow-hidden mb-5 ring-1 ring-white/10 bg-gradient-to-br from-secondary/50 to-secondary/30">
                         <img
                             src={getMediaUrl(item.mediaUrl)}
                             alt="Post"
                             className="w-full h-auto max-h-[500px] object-cover"
+                            onError={() => setImageError(true)}
                         />
+                    </div>
+                )}
+                {item.type === 'IMAGE' && item.mediaUrl && imageError && (
+                    <div className="rounded-2xl overflow-hidden mb-5 ring-1 ring-white/10 bg-gradient-to-br from-secondary/50 to-secondary/30 p-8 flex items-center justify-center min-h-[200px]">
+                        <p className="text-muted-foreground text-sm">Image unavailable</p>
                     </div>
                 )}
 

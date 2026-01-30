@@ -156,7 +156,7 @@ export default function VideoUploadDialog({ isOpen, onClose, onSuccess }: VideoU
     return (
         <>
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-w-[600px] bg-background border-border sm:rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
+                <DialogContent className="w-full max-h-[90vh] sm:max-h-[85vh] sm:max-w-[600px] bg-background border-border sm:rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
                     <DialogHeader className="p-6 border-b border-border bg-secondary/30 relative">
                         <DialogTitle className="text-xl font-bold flex items-center gap-2">
                             {status === 'idle' ? 'Upload Video' : 'Uploading Your Video'}

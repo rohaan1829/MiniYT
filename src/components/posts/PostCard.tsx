@@ -97,14 +97,27 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
         }
     };
 
+    const [imageError, setImageError] = useState(false);
+
     const renderMedia = () => {
         if (post.type === 'IMAGE' && post.mediaUrl) {
+            const imageUrl = getMediaUrl(post.mediaUrl);
+
+            if (imageError || !imageUrl) {
+                return (
+                    <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-secondary/30 ring-1 ring-white/10 p-8 flex items-center justify-center min-h-[200px]">
+                        <p className="text-muted-foreground text-sm">Image unavailable</p>
+                    </div>
+                );
+            }
+
             return (
                 <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-secondary/30 ring-1 ring-white/10">
                     <img
-                        src={getMediaUrl(post.mediaUrl)}
+                        src={imageUrl}
                         alt="Post media"
                         className="w-full h-auto max-h-[500px] object-cover"
+                        onError={() => setImageError(true)}
                     />
                 </div>
             );
