@@ -29,6 +29,8 @@ import notificationsRouter from './routes/notifications.routes';
 import subscriptionsRouter from './routes/subscriptions.routes';
 import { startTrendingWorker, stopTrendingWorker } from './workers/trending.worker';
 import { startVideoWorker, stopVideoWorker } from './workers/video.worker';
+import './config/passport'; // Initialize passport config
+import passport from 'passport';
 
 const app = express();
 
@@ -54,6 +56,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+app.use(passport.initialize());
 app.use(morgan('combined', {
     stream: { write: (msg: string) => logger.http(msg.trim()) },
 }));

@@ -212,3 +212,40 @@ export const revokeSession = async (userId: string, sessionId: string) => {
         },
     });
 };
+
+export const loginWithOAuth = async (user: any) => {
+    // Generate JWT
+    const token = jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            channelId: user.channel?.id || null,
+        },
+        config.jwtSecret,
+        { expiresIn: '7d' }
+    );
+
+    // Create a new session record
+    const sessionToken = uuidv4();
+    await prisma.session.create({
+        data: {
+            sessionToken,
+            userId: user.id,
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        },
+    });
+
+    return {
+        user: {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            name: user.name,
+            avatar: user.image,
+            channel: user.channel,
+        },
+        token,
+        sessionToken,
+    };
+};

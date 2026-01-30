@@ -5,6 +5,7 @@ import { validate } from '../middleware/validator';
 import { authenticate } from '../middleware/auth';
 import { config } from '../config/env';
 import * as authService from '../services/auth.service';
+import passport from 'passport';
 
 const router = Router();
 
@@ -135,5 +136,24 @@ router.delete('/sessions/:id', authenticate, async (req, res, next) => {
         next(error);
     }
 });
+
+// OAuth Routes
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/google/callback',
+    passport.authenticate('google', { session: false }),
+    async (req, res, next) => {
+        try {
+            const user = req.user as any;
+            const result = await authService.loginWithOAuth(user);
+
+            // Redirect to frontend with token
+            const frontendUrl = config.frontendUrl[0];
+            res.redirect(`${frontendUrl}/auth/callback?token=${result.token}&sessionToken=${result.sessionToken}`);
+        } catch (error) {
+            next(error);
+        }
+    }
+);
 
 export default router;
