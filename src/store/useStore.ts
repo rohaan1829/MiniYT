@@ -46,6 +46,7 @@ interface AppState {
     library: Video[];
     isUploading: boolean;
     uploadDialogOpen: boolean;
+    contentDialogOpen: boolean;
 
     // Auth actions
     setAuth: (user: User, token: string, rememberMe?: boolean) => void;
@@ -80,6 +81,7 @@ interface AppState {
     addToLibrary: (video: Video) => void;
     setIsUploading: (value: boolean) => void;
     setUploadDialogOpen: (value: boolean) => void;
+    setContentDialogOpen: (value: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -102,6 +104,7 @@ export const useStore = create<AppState>()(
             sessions: [],
             isUploading: false,
             uploadDialogOpen: false,
+            contentDialogOpen: false,
 
             // Auth actions
             setAuth: (user, token, rememberMe = false) => {
@@ -402,6 +405,7 @@ export const useStore = create<AppState>()(
             }),
             setIsUploading: (value: boolean) => set({ isUploading: value }),
             setUploadDialogOpen: (value: boolean) => set({ uploadDialogOpen: value }),
+            setContentDialogOpen: (value: boolean) => set({ contentDialogOpen: value }),
         }),
         {
             name: 'yiddishtishel-storage',

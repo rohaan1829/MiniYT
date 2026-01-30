@@ -36,6 +36,15 @@ export default function FeedVideoCard({ video }: FeedVideoCardProps) {
     const channelHandle = video.user?.channel?.handle;
     const channelAvatar = video.user?.channel?.avatarUrl;
 
+    // Helper to get proper media URL (handles both S3 URLs and local paths)
+    const getMediaUrl = (url: string | undefined) => {
+        if (!url) return undefined;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        return `${backendUrl}${url}`;
+    };
+
     return (
         <div className="bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 hover:border-white/20">
             {/* Decorative top gradient bar */}
@@ -48,7 +57,7 @@ export default function FeedVideoCard({ video }: FeedVideoCardProps) {
                         {/* Avatar */}
                         <Link href={channelHandle ? `/channel/${channelHandle}` : '#'}>
                             <Avatar className="h-12 w-12 ring-2 ring-white/10 hover:ring-blue-500/50 transition-all">
-                                <AvatarImage src={channelAvatar ? (channelAvatar.startsWith('http') ? channelAvatar : `${backendUrl}${channelAvatar}`) : undefined} />
+                                <AvatarImage src={getMediaUrl(channelAvatar)} />
                                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold">
                                     {channelName[0]?.toUpperCase()}
                                 </AvatarFallback>
@@ -71,7 +80,7 @@ export default function FeedVideoCard({ video }: FeedVideoCardProps) {
                     <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-black/50 aspect-video group cursor-pointer ring-1 ring-white/10">
                         {video.thumbnailUrl ? (
                             <img
-                                src={video.thumbnailUrl.startsWith('http') ? video.thumbnailUrl : `${backendUrl}${video.thumbnailUrl}`}
+                                src={getMediaUrl(video.thumbnailUrl)}
                                 alt={video.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />

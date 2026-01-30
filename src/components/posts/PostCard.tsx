@@ -55,6 +55,17 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
     const channelHandle = post.user?.channel?.handle;
     const channelAvatar = post.user?.channel?.avatarUrl || post.user?.image;
 
+    // Helper to get proper media URL (handles both S3 URLs and local paths)
+    const getMediaUrl = (url: string | undefined) => {
+        if (!url) return undefined;
+        // If it's already a full URL (S3), return as is
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        // Otherwise, prepend backend URL for local storage
+        return `${backendUrl}${url}`;
+    };
+
     const handleLike = async () => {
         if (!user) return;
         setIsLiking(true);
@@ -91,7 +102,7 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
             return (
                 <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-secondary/30 ring-1 ring-white/10">
                     <img
-                        src={`${backendUrl}${post.mediaUrl}`}
+                        src={getMediaUrl(post.mediaUrl)}
                         alt="Post media"
                         className="w-full h-auto max-h-[500px] object-cover"
                     />
@@ -99,41 +110,19 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
             );
         }
         if (post.type === 'VIDEO' && post.mediaUrl) {
+            const mediaUrl = getMediaUrl(post.mediaUrl);
+            const thumbnailUrl = getMediaUrl(post.thumbnailUrl);
+
             return (
-                <Link href={`/watch/${post.id}`} className="block">
-                    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-black/50 aspect-video group cursor-pointer ring-1 ring-white/10">
-                        {post.thumbnailUrl ? (
-                            <img
-                                src={`${backendUrl}${post.thumbnailUrl}`}
-                                alt="Video thumbnail"
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            />
-                        ) : (
-                            <video
-                                src={`${backendUrl}${post.mediaUrl}`}
-                                className="w-full h-full object-cover"
-                                muted
-                            />
-                        )}
-
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                        {/* Play overlay */}
-                        <div className="absolute inset-0 flex items-center justify-center gap-3 transition-all">
-                            <div className="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300 ring-4 ring-white/20">
-                                <Play className="h-8 w-8 text-black fill-black ml-1" />
-                            </div>
-                        </div>
-
-                        {/* Bottom text */}
-                        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                            <span className="text-white font-bold text-lg drop-shadow-lg">
-                                Watch on Yiddishtishel
-                            </span>
-                        </div>
-                    </div>
-                </Link>
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/50 to-black/50 ring-1 ring-white/10">
+                    <video
+                        src={mediaUrl}
+                        className="w-full max-h-[500px] object-contain"
+                        controls
+                        poster={thumbnailUrl}
+                        preload="metadata"
+                    />
+                </div>
             );
         }
         return null;
@@ -151,7 +140,7 @@ export default function PostCard({ post, onDeleted }: PostCardProps) {
                         {/* Avatar */}
                         <Link href={channelHandle ? `/channel/${channelHandle}` : '#'}>
                             <Avatar className="h-12 w-12 ring-2 ring-white/10 hover:ring-primary/50 transition-all">
-                                <AvatarImage src={channelAvatar ? (channelAvatar.startsWith('http') ? channelAvatar : `${backendUrl}${channelAvatar}`) : undefined} />
+                                <AvatarImage src={getMediaUrl(channelAvatar)} />
                                 <AvatarFallback className={`${typeConfig.iconBg} text-white font-bold`}>
                                     {channelName[0]?.toUpperCase()}
                                 </AvatarFallback>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Search, Bell, LogOut, User as UserIcon, Settings, Tv, ChevronDown, Video, Loader2 } from 'lucide-react';
+import { Menu, Search, Bell, LogOut, User as UserIcon, Settings, Tv, ChevronDown, Video, Loader2, Plus, Image as ImageIcon, Type, PenSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/store/useStore';
@@ -22,10 +22,11 @@ import { searchApi } from '@/lib/api/search';
 import { cn } from '@/lib/utils';
 import { History, TrendingUp } from 'lucide-react';
 import VideoUploadDialog from '@/components/video/VideoUploadDialog';
+import CreateContentDialog from '@/components/content/CreateContentDialog';
 import NotificationBell from './NotificationBell';
 
 export default function Header() {
-    const { toggleSidebar, toggleDock, user, logout, isUploading, uploadDialogOpen, setUploadDialogOpen } = useStore();
+    const { toggleSidebar, toggleDock, user, logout, isUploading, uploadDialogOpen, setUploadDialogOpen, contentDialogOpen, setContentDialogOpen } = useStore();
     const [mounted, setMounted] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -161,18 +162,65 @@ export default function Header() {
                         </div>
 
                         {user && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => !isUploading && setUploadDialogOpen(true)}
-                                className={cn(
-                                    "rounded-full w-8 h-8 md:w-10 md:h-10 transition-colors",
-                                    isUploading ? "text-primary cursor-not-allowed opacity-50" : "hover:bg-secondary"
-                                )}
-                                title={isUploading ? "Upload in progress..." : "Create"}
-                            >
-                                {isUploading ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Video className="w-4 h-4 md:w-5 md:h-5" />}
-                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={cn(
+                                            "rounded-full w-8 h-8 md:w-10 md:h-10 transition-colors",
+                                            isUploading ? "text-primary cursor-not-allowed opacity-50" : "hover:bg-secondary"
+                                        )}
+                                        title={isUploading ? "Upload in progress..." : "Create"}
+                                        disabled={isUploading}
+                                    >
+                                        {isUploading ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Plus className="w-5 h-5 md:w-6 md:h-6" />}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 bg-popover/95 backdrop-blur-xl border-white/10">
+                                    <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Create</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-white/10" />
+                                    <DropdownMenuItem
+                                        onClick={() => setUploadDialogOpen(true)}
+                                        className="flex items-center gap-3 py-3 cursor-pointer focus:bg-white/5"
+                                    >
+                                        <div className="p-2 rounded-lg bg-gradient-to-br from-red-500/20 to-pink-500/20">
+                                            <Video className="w-4 h-4 text-red-400" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">Upload Video</p>
+                                            <p className="text-xs text-muted-foreground">Share a video with HLS streaming</p>
+                                        </div>
+                                    </DropdownMenuItem>
+                                    {user.channel && (
+                                        <DropdownMenuItem
+                                            onClick={() => setContentDialogOpen(true)}
+                                            className="flex items-center gap-3 py-3 cursor-pointer focus:bg-white/5"
+                                        >
+                                            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
+                                                <PenSquare className="w-4 h-4 text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium">Create Post</p>
+                                                <p className="text-xs text-muted-foreground">Share text, images, or short videos</p>
+                                            </div>
+                                        </DropdownMenuItem>
+                                    )}
+                                    {!user.channel && (
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/channel/create" className="flex items-center gap-3 py-3 cursor-pointer focus:bg-white/5">
+                                                <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-violet-500/20">
+                                                    <Tv className="w-4 h-4 text-purple-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium">Create Channel</p>
+                                                    <p className="text-xs text-muted-foreground">Start creating content</p>
+                                                </div>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         )}
 
                         {mounted ? (
@@ -331,6 +379,11 @@ export default function Header() {
             <VideoUploadDialog
                 isOpen={uploadDialogOpen}
                 onClose={() => setUploadDialogOpen(false)}
+            />
+
+            <CreateContentDialog
+                isOpen={contentDialogOpen}
+                onClose={() => setContentDialogOpen(false)}
             />
         </header>
     );

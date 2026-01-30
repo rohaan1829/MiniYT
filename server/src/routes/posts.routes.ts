@@ -4,11 +4,13 @@ import { authenticate } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 import { z } from 'zod';
 import { PostType, PostVisibility } from '@prisma/client';
+import { storageProvider } from '../services/storage.service';
+import prisma from '../config/database';
 
 const router = Router();
 
 const createPostSchema = z.object({
-    channelId: z.string(),
+    channelId: z.string().optional(), // Now optional - will use user's channel if not provided
     type: z.nativeEnum(PostType),
     content: z.string().optional(),
     visibility: z.nativeEnum(PostVisibility).optional(),
@@ -65,15 +67,49 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', authenticate, upload.single('media'), async (req, res, next) => {
     try {
         const validatedData = createPostSchema.parse(req.body);
-        const mediaUrl = req.file ? `/uploads/posts/${req.file.filename}` : undefined;
+        const userId = (req as any).user.id;
+
+        // Get channelId - use provided one or get from user's channel
+        let channelId = validatedData.channelId;
+        if (!channelId) {
+            const userChannel = await prisma.channel.findUnique({
+                where: { ownerId: userId },
+            });
+            if (!userChannel) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You must have a channel to create posts. Please create a channel first.',
+                });
+            }
+            channelId = userChannel.id;
+        }
+
+        let mediaUrl: string | undefined;
+        let thumbnailUrl: string | undefined;
+
+        // Upload media to S3 if provided
+        if (req.file) {
+            const isVideo = req.file.mimetype.startsWith('video/');
+            const isImage = req.file.mimetype.startsWith('image/');
+
+            if (isImage || isVideo) {
+                const folder = isVideo ? 'posts/videos' : 'posts/images';
+                const s3Key = await storageProvider.uploadFile(req.file, {
+                    folder,
+                    keepLocalFile: false,
+                });
+                mediaUrl = storageProvider.getPublicUrl(s3Key);
+            }
+        }
 
         const post = await postService.createPost({
-            userId: (req as any).user.id,
-            channelId: validatedData.channelId,
+            userId,
+            channelId,
             type: validatedData.type,
             content: validatedData.content,
             visibility: validatedData.visibility,
             mediaUrl,
+            thumbnailUrl,
         });
 
         return res.status(201).json({ success: true, data: post });

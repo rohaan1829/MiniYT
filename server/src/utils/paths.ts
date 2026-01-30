@@ -14,6 +14,7 @@ export const UPLOAD_DIRS = {
     CHANNELS: path.join(UPLOADS_ROOT, 'channels'),
     VIDEOS: path.join(UPLOADS_ROOT, 'videos'),
     THUMBNAILS: path.join(UPLOADS_ROOT, 'thumbnails'),
+    POSTS: path.join(UPLOADS_ROOT, 'posts'),
 };
 
 // Ensure all directories exist
