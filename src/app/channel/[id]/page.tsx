@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
-import { Loader2, Home, Video, Users, Info, Bell, BellRing, Settings } from 'lucide-react';
+import { Loader2, Home, Video, Info, Bell, BellRing, Settings } from 'lucide-react';
 import PageContainer from '@/components/layout/PageContainer';
 import { useStore } from '@/store/useStore';
 import { channelApi } from '@/lib/api/channels';
@@ -14,8 +14,7 @@ import Link from 'next/link';
 import VideoUploadDialog from '@/components/video/VideoUploadDialog';
 import SubscribeButton from '@/components/channel/SubscribeButton';
 import { formatViews } from '@/lib/formatters';
-import CommunityFeed from '@/components/channel/CommunityFeed';
-import ChannelHome from '@/components/channel/ChannelHome';
+import ChannelFeed from '@/components/channel/ChannelFeed';
 import ChannelContentGrid from '@/components/channel/ChannelContentGrid';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +33,7 @@ interface ChannelData {
     notifyOnNewVideo: boolean;
 }
 
-type TabType = 'home' | 'videos' | 'community' | 'about';
+type TabType = 'home' | 'videos' | 'about';
 
 export default function ChannelPage() {
     const params = useParams();
@@ -114,7 +113,6 @@ export default function ChannelPage() {
     const tabs = [
         { id: 'home', label: 'Home', icon: Home },
         { id: 'videos', label: 'Videos', icon: Video },
-        { id: 'community', label: 'Community', icon: Users },
         { id: 'about', label: 'About', icon: Info },
     ];
 
@@ -241,14 +239,19 @@ export default function ChannelPage() {
                     {/* Tab Content */}
                     <div className="pb-20 animate-page-enter">
                         {activeTab === 'home' && (
-                            <ChannelHome
-                                videos={videos}
-                                channel={{
-                                    ...channel,
-                                    avatarUrl: channel.avatarUrl ? (channel.avatarUrl.startsWith('http') ? channel.avatarUrl : `${backendUrl}${channel.avatarUrl}`) : undefined
-                                }}
-                                isOwner={isOwner || false}
-                            />
+                            <div className="max-w-4xl mx-auto">
+                                <ChannelFeed
+                                    channelId={channel.id}
+                                    videos={videos}
+                                    channel={{
+                                        id: channel.id,
+                                        name: channel.name,
+                                        handle: channel.handle,
+                                        avatarUrl: channel.avatarUrl ? (channel.avatarUrl.startsWith('http') ? channel.avatarUrl : `${backendUrl}${channel.avatarUrl}`) : undefined
+                                    }}
+                                    isOwner={isOwner || false}
+                                />
+                            </div>
                         )}
 
                         {activeTab === 'videos' && (
@@ -264,15 +267,6 @@ export default function ChannelPage() {
                                     channelId={channel.id}
                                     type="videos"
                                     videos={videos}
-                                    isOwner={isOwner || false}
-                                />
-                            </div>
-                        )}
-
-                        {activeTab === 'community' && (
-                            <div className="max-w-3xl mx-auto">
-                                <CommunityFeed
-                                    channelId={channel.id}
                                     isOwner={isOwner || false}
                                 />
                             </div>
