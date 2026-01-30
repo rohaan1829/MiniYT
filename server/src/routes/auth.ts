@@ -149,7 +149,7 @@ router.get('/google/callback',
 
             // Redirect to frontend with token
             const frontendUrl = config.frontendUrl[0];
-            res.redirect(`${frontendUrl}/auth/callback?token=${result.token}&sessionToken=${result.sessionToken}`);
+            res.redirect(`${frontendUrl}/callback?token=${result.token}&sessionToken=${result.sessionToken}`);
         } catch (error) {
             next(error);
         }
