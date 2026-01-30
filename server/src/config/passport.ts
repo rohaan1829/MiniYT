@@ -8,7 +8,7 @@ passport.use(
         {
             clientID: config.google.clientId || 'PLACEHOLDER',
             clientSecret: config.google.clientSecret || 'PLACEHOLDER',
-            callbackURL: `${config.nodeEnv === 'production' ? 'https://yiddishtishel.com' : 'http://localhost:4000'}/api/auth/google/callback`,
+            callbackURL: 'https://yiddishtishel.com/api/auth/google/callback',
             scope: ['profile', 'email'],
         },
         async (accessToken, refreshToken, profile, done) => {
