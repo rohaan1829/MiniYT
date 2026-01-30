@@ -18,6 +18,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription,
 } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Header from '@/components/layout/Header';
@@ -29,6 +30,7 @@ import { API_ROOT_URL } from '@/lib/api/client';
 
 const profileSchema = z.object({
     name: z.string().min(1, 'Name is required').max(100),
+    username: z.string().min(3, 'Username must be at least 3 characters').max(30).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers and underscores'),
     email: z.string().email('Invalid email address'),
     bio: z.string().max(500).optional(),
 });
@@ -68,6 +70,7 @@ export default function SettingsPage() {
         resolver: zodResolver(profileSchema),
         defaultValues: {
             name: user?.name || '',
+            username: user?.username || '',
             email: user?.email || '',
             bio: user?.bio || '',
         },
@@ -352,10 +355,25 @@ export default function SettingsPage() {
                                                             )}
                                                         />
 
-                                                        <div className="p-4 bg-secondary/30 rounded-xl border border-border/50">
-                                                            <Label className="text-muted-foreground text-xs uppercase tracking-widest font-bold">Username (Read-only)</Label>
-                                                            <p className="mt-1 font-mono font-bold text-primary">@{user.username}</p>
-                                                        </div>
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="username"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel className="font-bold">Username</FormLabel>
+                                                                    <FormControl>
+                                                                        <div className="relative">
+                                                                            <span className="absolute left-3 top-2.5 text-muted-foreground font-mono">@</span>
+                                                                            <Input placeholder="username" {...field} disabled={isLoading} className="bg-background/50 rounded-xl pl-8 font-mono" />
+                                                                        </div>
+                                                                    </FormControl>
+                                                                    <FormDescription className="text-xs">
+                                                                        This is your unique handle on Yiddishtishel.
+                                                                    </FormDescription>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
 
                                                         <div className="pt-4 flex justify-end">
                                                             <Button type="submit" disabled={isLoading} className="rounded-full px-8 font-bold h-11">

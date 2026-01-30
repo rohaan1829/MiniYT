@@ -12,6 +12,7 @@ const router = Router();
 const updateProfileSchema = z.object({
     body: z.object({
         name: z.string().min(1).max(100).optional(),
+        username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers and underscores').optional(),
         email: z.string().email().optional(),
         bio: z.string().max(500).optional(),
         settings: z.record(z.any()).optional(),
@@ -38,13 +39,27 @@ router.patch(
     validate(updateProfileSchema),
     async (req: AuthRequest, res, next) => {
         try {
-            const { name, email, bio, settings } = req.body;
+            const { name, username, email, bio, settings } = req.body;
             const userId = req.user!.id;
+
+            // Check if username is already taken
+            if (username) {
+                const existingUser = await prisma.user.findFirst({
+                    where: {
+                        username,
+                        NOT: { id: userId }
+                    }
+                });
+                if (existingUser) {
+                    throw new BadRequestError('Username is already taken');
+                }
+            }
 
             const updated = await prisma.user.update({
                 where: { id: userId },
                 data: {
                     ...(name && { name }),
+                    ...(username && { username }),
                     ...(email && { email }),
                     ...(bio !== undefined && { bio }),
                     ...(settings && { settings }),

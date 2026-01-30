@@ -33,7 +33,7 @@ export const authApi = {
         return response.data;
     },
 
-    updateProfile: async (data: { name?: string; email?: string; bio?: string; settings?: any }) => {
+    updateProfile: async (data: { name?: string; username?: string; email?: string; bio?: string; settings?: any }) => {
         const response = await apiClient.patch('/users/me', data);
         return response.data;
     },
